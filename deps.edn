@@ -1,8 +1,11 @@
-{:aliases  {:dev {:extra-paths ["development/src"]
-
-                  :extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}}}
-
-            :test {:extra-paths []}
-
-            :poly {:main-opts ["-m" "polylith.clj.core.poly-cli.core"]
-                   :extra-deps {polylith/clj-poly {:mvn/version "0.2.18"}}}}}
+{:aliases {:dev {:extra-deps
+                 {nrepl/nrepl {:mvn/version "1.1.1"},
+                  org.clojure/clojure {:mvn/version "1.11.1"},
+                  org.clojure/clojurescript {:mvn/version "1.11.4"},
+                  poly/lwjgl-tutorial {:local/root "components/lwjgl-tutorial"},
+                  poly/super-kaolio {:local/root "components/super-kaolio"}},
+                 :extra-paths ["development/src"]},
+           :poly {:extra-deps {polylith/clj-poly {:mvn/version "0.2.18"}},
+                  :main-opts ["-m" "polylith.clj.core.poly-cli.core"]},
+           :test {:extra-paths ["components/super-kaolio/test"
+                                "components/lwjgl-tutorial/test"]}}}

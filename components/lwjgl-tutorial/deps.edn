@@ -1,0 +1,11 @@
+{:aliases {:test {:extra-deps {}, :extra-paths ["test"]}},
+ :deps {org.lwjgl/lwjgl {:mvn/version "3.2.3"},
+        org.lwjgl/lwjgl-glfw {:mvn/version "3.2.3"},
+        org.lwjgl/lwjgl-opengl {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-stb {:mvn/version "3.3.3"},
+        ;; mac
+        org.lwjgl/lwjgl$natives-macos {:mvn/version "3.2.3"},
+        org.lwjgl/lwjgl-glfw$natives-macos {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-opengl$natives-macos {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-stb$natives-macos {:mvn/version "3.3.3"}},
+ :paths ["src" "resources"]}
