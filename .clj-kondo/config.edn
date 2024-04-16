@@ -1,1 +1,2 @@
-{:exclude-files "(development/.*$)|(components/super-kaolio/.*$)"}
+{:exclude-files
+ "(development/.*$)|(components/super-kaolio/.*$)|(components/lwjgl-tutorial/.*$)"}

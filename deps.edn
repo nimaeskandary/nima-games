@@ -3,9 +3,12 @@
                   org.clojure/clojure {:mvn/version "1.11.1"},
                   org.clojure/clojurescript {:mvn/version "1.11.4"},
                   poly/lwjgl-tutorial {:local/root "components/lwjgl-tutorial"},
-                  poly/super-kaolio {:local/root "components/super-kaolio"}},
-                 :extra-paths ["development/src"]},
-           :poly {:extra-deps {polylith/clj-poly {:mvn/version "0.2.18"}},
-                  :main-opts ["-m" "polylith.clj.core.poly-cli.core"]},
-           :test {:extra-paths ["components/super-kaolio/test"
-                                "components/lwjgl-tutorial/test"]}}}
+                  poly/super-kaolio {:local/root "components/super-kaolio"},
+                  poly/vulcan-tutorial {:local/root
+                                        "components/vulcan-tutorial"}}},
+           :extra-paths ["development/src"]},
+ :poly {:extra-deps {polylith/clj-poly {:mvn/version "0.2.18"}},
+        :main-opts ["-m" "polylith.clj.core.poly-cli.core"]},
+ :test {:extra-paths ["components/super-kaolio/test"
+                      "components/lwjgl-tutorial/test"
+                      "components/vulcan-tutorial/test"]}}

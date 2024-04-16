@@ -1,0 +1,21 @@
+{:aliases {:test {:extra-deps {}, :extra-paths ["test"]}},
+ :deps {com.stuartsierra/component {:mvn/version "1.1.0"},
+        ;; lwjgl
+        org.lwjgl/lwjgl {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-glfw {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-shaderc {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-assimp {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-vma {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-stb {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-vulkan {:mvn/version "3.3.3"},
+        ;; math
+        org.joml/joml {:mvn/version "1.10.5"},
+        ;; mac
+        org.lwjgl/lwjgl$natives-macos {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-glfw$natives-macos {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-shaderc$natives-macos {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-assimp$natives-macos {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-vma$natives-macos {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-stb$natives-macos {:mvn/version "3.3.3"},
+        org.lwjgl/lwjgl-vulkan$natives-macos {:mvn/version "3.3.3"}},
+ :paths ["src" "resources"]}
