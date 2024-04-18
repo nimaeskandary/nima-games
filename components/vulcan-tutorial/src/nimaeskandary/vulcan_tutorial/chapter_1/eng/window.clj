@@ -61,10 +61,11 @@
 
 
 (defn stop
-  [{:keys [window-handle]}]
+  [{:keys [window-handle], :as this}]
   (Callbacks/glfwFreeCallbacks window-handle)
   (GLFW/glfwDestroyWindow window-handle)
-  (GLFW/glfwTerminate))
+  (GLFW/glfwTerminate)
+  this)
 
 (defn get-height [this] (deref (:height this)))
 

@@ -28,10 +28,11 @@
            :running? (atom false))))
 
 (defn stop
-  [{:keys [app-logic render window]}]
+  [{:keys [app-logic render window], :as this}]
   (proto.app-logic/stop app-logic)
   (proto.render/stop render)
-  (proto.window/stop window))
+  (proto.window/stop window)
+  this)
 
 (defn run-loop
   [window app-logic render scene time-u init-time-atom delta-update-atom

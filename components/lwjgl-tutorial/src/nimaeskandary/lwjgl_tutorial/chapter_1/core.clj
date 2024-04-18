@@ -33,19 +33,16 @@
                                   (when (and (= GLFW/GLFW_KEY_ESCAPE key)
                                              (= GLFW/GLFW_RELEASE action))
                                     (GLFW/glfwSetWindowShouldClose w true)))))
-    ;; get thread stack and push new frame
-    (let [;; need to use native accessible memory to interact with native
-          ;; libraries
-          stack (MemoryStack/stackPush)
-          ;; allocate memory for two ints
-          pWidth (.mallocInt stack 1)
-          pHeight (.mallocInt stack 1)
-          ;; set values for those ints via pass by reference
-          _ (GLFW/glfwGetWindowSize window pWidth pHeight)
-          vidmode (GLFW/glfwGetVideoMode (GLFW/glfwGetPrimaryMonitor))
-          centerX (/ (- (.width vidmode) (.get pWidth 0)) 2)
-          centerY (/ (- (.width vidmode) (.get pWidth 0)) 2)]
-      (GLFW/glfwSetWindowPos window centerX centerY))
+    (with-open [stack (MemoryStack/stackPush)]
+      (let [;; allocate memory for two ints
+            pWidth (.mallocInt stack 1)
+            pHeight (.mallocInt stack 1)
+            ;; set values for those ints via pass by reference
+            _ (GLFW/glfwGetWindowSize window pWidth pHeight)
+            vidmode (GLFW/glfwGetVideoMode (GLFW/glfwGetPrimaryMonitor))
+            centerX (/ (- (.width vidmode) (.get pWidth 0)) 2)
+            centerY (/ (- (.width vidmode) (.get pWidth 0)) 2)]
+        (GLFW/glfwSetWindowPos window centerX centerY)))
     ;; make OpenGL context current
     (GLFW/glfwMakeContextCurrent window)
     ;; enable v sync

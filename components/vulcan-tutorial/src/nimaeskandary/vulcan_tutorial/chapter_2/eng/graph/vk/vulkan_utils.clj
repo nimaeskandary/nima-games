@@ -12,8 +12,7 @@
   (-> (System/getProperty "os.name" "generic")
       (.toLowerCase Locale/ENGLISH)))
 
-(defn get-os
-  []
+(def os-type
   (cond (or (str/includes? os-name "mac") (str/includes? os-name "darwin"))
         os-type:macos
         (str/includes? os-name "win") os-type:windows
