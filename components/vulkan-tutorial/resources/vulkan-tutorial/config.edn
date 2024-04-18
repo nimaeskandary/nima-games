@@ -1,0 +1,3 @@
+;; not using
+;; https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-01/src/main/java/org/vulkanb/eng/EngineProperties.java
+{:ups 30, :validate? true}
