@@ -1,0 +1,17 @@
+(ns nimaeskandary.vulkan-tutorial.chapter-3.eng.proto.window)
+
+(defprotocol Window
+  (start [this])
+  (stop [this])
+  (get-width [this])
+  (get-height [this])
+  (get-mouse-input [this])
+  (get-window-handle [this])
+  (is-key-pressed? [this key-code])
+  (is-resized? [this])
+  (poll-events [this])
+  (reset-resized [this])
+  (resize [this width height])
+  (set-resized [this resized?])
+  (set-should-close [this])
+  (should-close? [this]))
