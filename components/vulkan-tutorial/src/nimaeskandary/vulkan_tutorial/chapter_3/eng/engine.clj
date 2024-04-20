@@ -26,6 +26,7 @@
 
 (defn stop
   [{:keys [app-logic render window], :as this}]
+  (println "stopping engine")
   (proto.app-logic/stop app-logic)
   (proto.render/stop render)
   (proto.window/stop window)
@@ -64,7 +65,8 @@
                 init-time-atom
                 delta-update-atom
                 update-time-atom))
-    (proto.engine/stop this)))
+    (proto.engine/stop this)
+    (println "all stopped")))
 
 (defn init [this] (reset! (:running? this) true) (proto.engine/run this))
 

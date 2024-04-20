@@ -62,6 +62,7 @@
 
 (defn stop
   [{:keys [window-handle], :as this}]
+  (println "stopping window")
   (Callbacks/glfwFreeCallbacks window-handle)
   (GLFW/glfwDestroyWindow window-handle)
   (GLFW/glfwTerminate)

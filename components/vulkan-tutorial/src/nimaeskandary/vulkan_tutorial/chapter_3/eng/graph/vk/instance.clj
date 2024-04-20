@@ -3,9 +3,9 @@
             [nimaeskandary.vulkan-tutorial.chapter-3.eng.graph.vk.vulkan-utils
              :as vulkan-utils]
             [nimaeskandary.vulkan-tutorial.chapter-3.eng.proto.instance :as
-             proto.instance])
-  (:import (java.nio Buffer IntBuffer)
-           (org.lwjgl.glfw GLFWVulkan)
+             proto.instance]
+            [nimaeskandary.vulkan-tutorial.chapter-3.utils :as utils])
+  (:import (org.lwjgl.glfw GLFWVulkan)
            (org.lwjgl.system MemoryStack MemoryUtil)
            (org.lwjgl.vulkan EXTDebugUtils VkApplicationInfo)
            (org.lwjgl.vulkan KHRPortabilitySubset
@@ -56,23 +56,19 @@
                                       "VK_LAYER_LUNARG_core_validation"
                                       "VK_LAYER_GOOGLE_unique_objects"})))))
 
-(defn vk-enumerate-instance-extension-properties
-  [^CharSequence p-layer-name ^IntBuffer p-prop-count ^Buffer p-properties]
-  (VK13/vkEnumerateInstanceExtensionProperties p-layer-name
-                                               p-prop-count
-                                               p-properties))
-
 (defn get-instance-exts
   []
   (with-open [stack (MemoryStack/stackPush)]
     (let [num-exts-buff (.callocInt stack 1)
-          _ (vk-enumerate-instance-extension-properties nil num-exts-buff nil)
+          _ (VK13/vkEnumerateInstanceExtensionProperties ^String utils/nil*
+                                                         num-exts-buff
+                                                         nil)
           num-exts (.get num-exts-buff 0)
           _ (println (format "instance supports %d extensions" num-exts))
           props-buff (VkExtensionProperties/calloc num-exts stack)
-          _ (vk-enumerate-instance-extension-properties nil
-                                                        num-exts-buff
-                                                        props-buff)]
+          _ (VK13/vkEnumerateInstanceExtensionProperties ^String utils/nil*
+                                                         num-exts-buff
+                                                         props-buff)]
       (set (for [^Integer i (range num-exts)]
              (let [ext-name (-> props-buff
                                 ^VkExtensionProperties (.get i)
@@ -228,7 +224,7 @@
 
 (defn stop
   [{:keys [vk-instance vk-debug-handle debug-utils], :as this}]
-  (println "destroying vulkan instance")
+  (println "stopping vulkan instance")
   (when (not= VK13/VK_NULL_HANDLE vk-debug-handle)
     (EXTDebugUtils/vkDestroyDebugUtilsMessengerEXT vk-instance
                                                    vk-debug-handle
