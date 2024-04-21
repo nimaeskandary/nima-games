@@ -3,4 +3,4 @@
 (defprotocol Surface
   (start [this])
   (stop [this])
-  (get-vk-surface [this]))
+  (get-vk-surface ^Long [this]))

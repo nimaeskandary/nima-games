@@ -1,3 +1,7 @@
 ;; not using
 ;; https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-01/src/main/java/org/vulkanb/eng/EngineProperties.java
-{:physical-device-name nil, :ups 30, :validate? true}
+{:physical-device-name nil,
+ :requested-images 3,
+ :ups 30,
+ :validate? true,
+ :vysnc? true}

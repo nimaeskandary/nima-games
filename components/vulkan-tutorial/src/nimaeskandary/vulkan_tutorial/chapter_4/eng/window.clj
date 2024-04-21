@@ -12,7 +12,8 @@
            (org.lwjgl.system MemoryUtil)))
 
 (defn start
-  [this ^String title ^GLFWKeyCallbackI key-callback]
+  [{:keys [^String title ^GLFWKeyCallbackI key-callback], :as this}]
+  (println "starting window")
   (when (not (GLFW/glfwInit)) (throw (Exception. "unable to start GLFW")))
   (when (not (GLFWVulkan/glfwVulkanSupported))
     (throw (Exception.
@@ -105,7 +106,7 @@
 
 (defrecord Window [title key-callback]
   proto.window/Window
-    (start [this] (start this title key-callback))
+    (start [this] (start this))
     (stop [this] (stop this))
     (get-height [this] (get-height this))
     (get-width [this] (get-width this))

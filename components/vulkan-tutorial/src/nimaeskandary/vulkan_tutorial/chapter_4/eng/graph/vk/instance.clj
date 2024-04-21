@@ -9,7 +9,7 @@
            (org.lwjgl.system MemoryStack MemoryUtil)
            (org.lwjgl.vulkan EXTDebugUtils VkApplicationInfo)
            (org.lwjgl.vulkan KHRPortabilitySubset
-                             VK13
+                             VK12
                              VkDebugUtilsMessengerCallbackDataEXT
                              VkDebugUtilsMessengerCallbackEXTI
                              VkDebugUtilsMessengerCreateInfoEXT
@@ -33,11 +33,11 @@
   []
   (with-open [stack (MemoryStack/stackPush)]
     (let [num-layers-buff (.callocInt stack 1)
-          _ (VK13/vkEnumerateInstanceLayerProperties num-layers-buff nil)
+          _ (VK12/vkEnumerateInstanceLayerProperties num-layers-buff nil)
           num-layers (.get num-layers-buff 0)
           _ (println (format "instance supports %d layers" num-layers))
           props-buff (VkLayerProperties/calloc num-layers stack)
-          _ (VK13/vkEnumerateInstanceLayerProperties num-layers-buff props-buff)
+          _ (VK12/vkEnumerateInstanceLayerProperties num-layers-buff props-buff)
           supported-layers
           (set (for [^Integer i (range num-layers)]
                  (let [layer-name (-> props-buff
@@ -60,13 +60,13 @@
   []
   (with-open [stack (MemoryStack/stackPush)]
     (let [num-exts-buff (.callocInt stack 1)
-          _ (VK13/vkEnumerateInstanceExtensionProperties ^String utils/nil*
+          _ (VK12/vkEnumerateInstanceExtensionProperties ^String utils/nil*
                                                          num-exts-buff
                                                          nil)
           num-exts (.get num-exts-buff 0)
           _ (println (format "instance supports %d extensions" num-exts))
           props-buff (VkExtensionProperties/calloc num-exts stack)
-          _ (VK13/vkEnumerateInstanceExtensionProperties ^String utils/nil*
+          _ (VK12/vkEnumerateInstanceExtensionProperties ^String utils/nil*
                                                          num-exts-buff
                                                          props-buff)]
       (set (for [^Integer i (range num-exts)]
@@ -114,23 +114,23 @@
                                (.pMessageString callback-data)))
               :else (println (format "debug - VkDebugUtilsCallback %s"
                                      (.pMessageString callback-data))))
-            (VK13/VK_FALSE)))))))
+            (VK12/VK_FALSE)))))))
 
 (defn start
   [{:keys [validate?], :as this}]
-  (println "creating vulkan instance")
+  (println "starting vulkan instance")
   (with-open [stack (MemoryStack/stackPush)]
     (let
       [;; create application info
        app-short-name (.UTF8 stack "VulkanBook")
        app-info (-> stack
                     VkApplicationInfo/calloc
-                    (.sType VK13/VK_STRUCTURE_TYPE_APPLICATION_INFO)
+                    (.sType VK12/VK_STRUCTURE_TYPE_APPLICATION_INFO)
                     (.pApplicationName app-short-name)
                     (.applicationVersion 1)
                     (.pEngineName app-short-name)
                     (.engineVersion 0)
-                    (.apiVersion VK13/VK_API_VERSION_1_3))
+                    (.apiVersion VK12/VK_API_VERSION_1_2))
        ;; validation layers
        validation-layers (get-supported-validation-layers)
        num-validation-layers (count validation-layers)
@@ -191,7 +191,7 @@
        ext (if debug-utils (.address debug-utils) (MemoryUtil/NULL))
        ;; create instance info
        instance-info (doto (VkInstanceCreateInfo/calloc stack)
-                       (.sType VK13/VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
+                       (.sType VK12/VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO)
                        (.pNext ext)
                        (.pApplicationInfo app-info)
                        (.ppEnabledLayerNames required-layers)
@@ -203,7 +203,7 @@
           KHRPortabilityEnumeration/VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR))
        p-instance (.mallocPointer stack 1)
        _ (vulkan-utils/vk-check
-          (VK13/vkCreateInstance instance-info nil p-instance)
+          (VK12/vkCreateInstance instance-info nil p-instance)
           "error creating instance")
        vk-instance (VkInstance. (.get p-instance 0) instance-info)
        vk-debug-handle (if validate?
@@ -216,7 +216,7 @@
                              b-long)
                             "error creating debug utils")
                            (.get b-long 0))
-                         VK13/VK_NULL_HANDLE)]
+                         VK12/VK_NULL_HANDLE)]
       (assoc this
              :vk-instance vk-instance
              :debug-utils debug-utils
@@ -225,11 +225,11 @@
 (defn stop
   [{:keys [vk-instance vk-debug-handle debug-utils], :as this}]
   (println "stopping vulkan instance")
-  (when (not= VK13/VK_NULL_HANDLE vk-debug-handle)
+  (when (not= VK12/VK_NULL_HANDLE vk-debug-handle)
     (EXTDebugUtils/vkDestroyDebugUtilsMessengerEXT vk-instance
                                                    vk-debug-handle
                                                    nil))
-  (VK13/vkDestroyInstance vk-instance nil)
+  (VK12/vkDestroyInstance vk-instance nil)
   (when debug-utils
     (-> debug-utils
         .pfnUserCallback

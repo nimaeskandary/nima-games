@@ -13,6 +13,7 @@
 
 (defn start
   [this window-title app-logic]
+  (println "starting engine")
   (let [window (proto.window/start (eng.window/->Window window-title nil))
         scene (scene.scene/->Scene window)
         render (proto.render/start (graph.render/->Render window scene))]

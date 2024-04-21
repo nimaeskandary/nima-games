@@ -3,8 +3,8 @@
 (defprotocol Window
   (start [this])
   (stop [this])
-  (get-width [this])
-  (get-height [this])
+  (^Integer get-width [this])
+  (^Integer get-height [this])
   (get-mouse-input [this])
   (get-window-handle [this])
   (is-key-pressed? [this key-code])

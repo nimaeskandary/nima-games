@@ -9,7 +9,7 @@
   (:import (java.util.function Consumer)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan KHRSwapchain
-                             VK13
+                             VK12
                              VkExtensionProperties
                              VkInstance
                              VkPhysicalDevice
@@ -21,30 +21,31 @@
 
 (defn start
   [{:keys [^VkPhysicalDevice vk-physical-device], :as this}]
+  (println "starting physical device")
   (with-open [stack (MemoryStack/stackPush)]
     (let [int-b (.mallocInt stack 1)
           ;; get device properties
           vk-physical-device-props
           (-> (VkPhysicalDeviceProperties2/calloc)
-              (.sType VK13/VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2))
-          _ (VK13/vkGetPhysicalDeviceProperties2 vk-physical-device
+              (.sType VK12/VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2))
+          _ (VK12/vkGetPhysicalDeviceProperties2 vk-physical-device
                                                  vk-physical-device-props)
           ;; get device extensions
           _ (vulkan-utils/vk-check
-             (VK13/vkEnumerateDeviceExtensionProperties vk-physical-device
+             (VK12/vkEnumerateDeviceExtensionProperties vk-physical-device
                                                         ^String utils/nil*
                                                         int-b
                                                         nil)
              "failed to get number of device extension properties")
           vk-device-exts (VkExtensionProperties/calloc (.get int-b 0))
-          _ (vulkan-utils/vk-check (VK13/vkEnumerateDeviceExtensionProperties
+          _ (vulkan-utils/vk-check (VK12/vkEnumerateDeviceExtensionProperties
                                     vk-physical-device
                                     ^String utils/nil*
                                     int-b
                                     vk-device-exts)
                                    "failed to get extension properties")
           ;; get queue family props
-          _ (VK13/vkGetPhysicalDeviceQueueFamilyProperties2 vk-physical-device
+          _ (VK12/vkGetPhysicalDeviceQueueFamilyProperties2 vk-physical-device
                                                             int-b
                                                             nil)
           vk-queue-family-props (VkQueueFamilyProperties2/calloc (.get int-b 0))
@@ -55,22 +56,22 @@
                     (accept [_ qfp]
                       (.sType
                        ^VkQueueFamilyProperties2 qfp
-                       VK13/VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2)))))
-          _ (VK13/vkGetPhysicalDeviceQueueFamilyProperties2
+                       VK12/VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2)))))
+          _ (VK12/vkGetPhysicalDeviceQueueFamilyProperties2
              vk-physical-device
              int-b
              vk-queue-family-props)
           ;; get features
           vk-physical-device-features
           (-> (VkPhysicalDeviceFeatures2/calloc)
-              (.sType VK13/VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2))
-          _ (VK13/vkGetPhysicalDeviceFeatures2 vk-physical-device
+              (.sType VK12/VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2))
+          _ (VK12/vkGetPhysicalDeviceFeatures2 vk-physical-device
                                                vk-physical-device-features)
           vk-mem-props
           (-> (VkPhysicalDeviceMemoryProperties2/calloc)
               (.sType
-               VK13/VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2))
-          _ (VK13/vkGetPhysicalDeviceMemoryProperties2 vk-physical-device
+               VK12/VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2))
+          _ (VK12/vkGetPhysicalDeviceMemoryProperties2 vk-physical-device
                                                        vk-mem-props)]
       (assoc this
              :vk-physical-device-props vk-physical-device-props
@@ -127,7 +128,7 @@
                                  (bit-and (-> (.queueFamilyProperties
                                                family-props)
                                               (.queueFlags))
-                                          VK13/VK_QUEUE_GRAPHICS_BIT))]
+                                          VK12/VK_QUEUE_GRAPHICS_BIT))]
                        has-graphics-bit?)))
            first))))
 
@@ -161,14 +162,14 @@
   (let [int-b (.mallocInt stack 1)
         ^VkInstance vk-instance (proto.instance/get-vk-instance instance)
         _ (-> vk-instance
-              (VK13/vkEnumeratePhysicalDevices int-b nil)
+              (VK12/vkEnumeratePhysicalDevices int-b nil)
               (vulkan-utils/vk-check
                "failed to get number of physical devices"))
         num-devices (.get int-b 0)
         _ (println (format "detected %d physical devices" num-devices))
         physical-devices (.mallocPointer stack num-devices)
         _ (-> vk-instance
-              (VK13/vkEnumeratePhysicalDevices int-b physical-devices)
+              (VK12/vkEnumeratePhysicalDevices int-b physical-devices)
               (vulkan-utils/vk-check "failed to get physical devices"))]
     physical-devices))
 
@@ -183,7 +184,7 @@
               (throw (Exception. "no physical devices found")))
           preferred-match (atom nil)
           other-valid-devices
-          (set
+          (doall
            (for [i (range num-devices)
                  ;; go until we find the preferred device
                  :while (nil? @preferred-match)]

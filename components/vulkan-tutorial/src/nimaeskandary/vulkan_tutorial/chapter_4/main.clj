@@ -7,6 +7,7 @@
 
 (defn start
   [this]
+  (println "starting main")
   (let [engine (proto.engine/start (engine/->Engine "Vulkan Book" this))]
     (proto.engine/init engine)))
 

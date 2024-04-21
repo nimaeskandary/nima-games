@@ -1,5 +1,7 @@
 (ns nimaeskandary.vulkan-tutorial.chapter-4.eng.graph.vk.surface
-  (:require [nimaeskandary.vulkan-tutorial.chapter-4.eng.proto.physical-device
+  (:require [nimaeskandary.vulkan-tutorial.chapter-4.eng.graph.vk.vulkan-utils
+             :as vulkan-utils]
+            [nimaeskandary.vulkan-tutorial.chapter-4.eng.proto.physical-device
              :as proto.physical-device]
             [nimaeskandary.vulkan-tutorial.chapter-4.eng.proto.surface :as
              proto.surface])
@@ -9,16 +11,17 @@
 
 (defn start
   [{:keys [physical-device ^Long window-handle], :as this}]
-  (println "creating vulkan surface")
+  (println "starting vulkan surface")
   (with-open [stack (MemoryStack/stackPush)]
     (let [^VkPhysicalDevice vk-physical-device
           (proto.physical-device/get-vk-physical-device physical-device)
           surface-p (.mallocLong stack 1)
-          _ (GLFWVulkan/glfwCreateWindowSurface (.getInstance
-                                                 vk-physical-device)
-                                                window-handle
-                                                nil
-                                                surface-p)
+          _ (-> (GLFWVulkan/glfwCreateWindowSurface (.getInstance
+                                                     vk-physical-device)
+                                                    window-handle
+                                                    nil
+                                                    surface-p)
+                (vulkan-utils/vk-check "error creating surface"))
           vk-surface (.get surface-p 0)]
       (assoc this :physical-device physical-device :vk-surface vk-surface))))
 

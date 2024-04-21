@@ -5,7 +5,7 @@
      proto.physical-device]
     [nimaeskandary.vulkan-tutorial.chapter-4.eng.proto.queue :as proto.queue])
   (:import (org.lwjgl.system MemoryStack)
-           (org.lwjgl.vulkan VK13
+           (org.lwjgl.vulkan VK12
                              VkDevice
                              VkDeviceQueueInfo2
                              VkQueue
@@ -14,16 +14,16 @@
 
 (defn start
   [{:keys [device queue-family-index queue-index], :as this}]
-  (println "creating queue")
+  (println "starting queue")
   (with-open [stack (MemoryStack/stackPush)]
     (let [queue-p (.mallocPointer stack 1)
           ^VkDevice vk-device (proto.device/get-vk-device device)
           vk-device-queue-info
           (-> (VkDeviceQueueInfo2/calloc stack)
-              (.sType (VK13/VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2))
+              (.sType (VK12/VK_STRUCTURE_TYPE_DEVICE_QUEUE_INFO_2))
               (.queueFamilyIndex queue-family-index)
               (.queueIndex queue-index))
-          _ (VK13/vkGetDeviceQueue2 vk-device vk-device-queue-info queue-p)
+          _ (VK12/vkGetDeviceQueue2 vk-device vk-device-queue-info queue-p)
           queue (.get queue-p 0)
           vk-queue (VkQueue. queue vk-device)]
       (assoc this :vk-queue vk-queue))))
@@ -35,7 +35,7 @@
 
 (defn get-vk-queue [{:keys [vk-queue]}] vk-queue)
 
-(defn wait-idle [{:keys [vk-queue]}] (VK13/vkQueueWaitIdle vk-queue))
+(defn wait-idle [{:keys [vk-queue]}] (VK12/vkQueueWaitIdle vk-queue))
 
 (defrecord Queue [device queue-family-index queue-index]
   proto.queue/Queue
@@ -56,7 +56,7 @@
       (let [props (-> ^VkQueueFamilyProperties2 (.get queue-props-b i)
                       .queueFamilyProperties)
             is-graphics-queue?
-            (not= 0 (bit-and (.queueFlags props) VK13/VK_QUEUE_GRAPHICS_BIT))]
+            (not= 0 (bit-and (.queueFlags props) VK12/VK_QUEUE_GRAPHICS_BIT))]
         (when is-graphics-queue? (reset! graphics-index i))))
     (when (nil? @graphics-index)
       (throw (Exception. "failed to get graphics queue family index")))

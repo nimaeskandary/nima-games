@@ -1,7 +1,7 @@
 (ns nimaeskandary.vulkan-tutorial.chapter-4.eng.graph.vk.vulkan-utils
   (:require [clojure.string :as str])
   (:import (java.util Locale)
-           (org.lwjgl.vulkan VK13)))
+           (org.lwjgl.vulkan VK12)))
 
 (def os-type:macos "macos")
 (def os-type:windows "windows")
@@ -21,5 +21,5 @@
 
 (defn vk-check
   [error-code error-message]
-  (when (not= VK13/VK_SUCCESS error-code)
+  (when (not= VK12/VK_SUCCESS error-code)
     (throw (Exception. (format "%d:%s" error-message error-code)))))

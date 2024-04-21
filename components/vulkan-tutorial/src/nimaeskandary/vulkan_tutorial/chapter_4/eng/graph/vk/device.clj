@@ -9,7 +9,7 @@
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan KHRPortabilitySubset
                              KHRSwapchain
-                             VK13
+                             VK12
                              VkDevice
                              VkDeviceCreateInfo
                              VkDeviceQueueCreateInfo
@@ -25,14 +25,14 @@
     (let [^VkPhysicalDevice vk-physical-device
           (proto.physical-device/get-vk-physical-device physical-device)
           num-exts-b (.callocInt stack 1)
-          _ (VK13/vkEnumerateDeviceExtensionProperties vk-physical-device
+          _ (VK12/vkEnumerateDeviceExtensionProperties vk-physical-device
                                                        ^String utils/nil*
                                                        num-exts-b
                                                        nil)
           num-exts (.get num-exts-b 0)
           _ (println (format "device supports %d extensions" num-exts))
           props-b (VkExtensionProperties/calloc num-exts stack)
-          _ (VK13/vkEnumerateDeviceExtensionProperties vk-physical-device
+          _ (VK12/vkEnumerateDeviceExtensionProperties vk-physical-device
                                                        ^String utils/nil*
                                                        num-exts-b
                                                        props-b)]
@@ -45,7 +45,7 @@
 
 (defn start
   [{:keys [physical-device], :as this}]
-  (println "creating device")
+  (println "starting device")
   (with-open [stack (MemoryStack/stackPush)]
     (let [;; define required exts
           device-exts-set (get-device-exts-set physical-device)
@@ -69,7 +69,7 @@
           ;; set up required features
           features (-> (VkPhysicalDeviceFeatures2/calloc stack)
                        (.sType
-                        VK13/VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2))
+                        VK12/VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2))
           ;; enable all queue families
           ^VkQueueFamilyProperties2$Buffer queue-props-b
           (proto.physical-device/get-vk-queue-family-props physical-device)
@@ -87,19 +87,19 @@
                                                  .queueCount))]
                 (-> queue-creation-info-b
                     ^VkDeviceQueueCreateInfo (.get i)
-                    (.sType VK13/VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
+                    (.sType VK12/VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO)
                     (.queueFamilyIndex i)
                     (.pQueuePriorities priorities))))
           device-create-info (-> (VkDeviceCreateInfo/calloc stack)
                                  (.sType
-                                  VK13/VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
+                                  VK12/VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
                                  (.ppEnabledExtensionNames required-exts)
                                  (.pEnabledFeatures (.features features))
                                  (.pQueueCreateInfos queue-creation-info-b))
           device-p (.mallocPointer stack 1)
           vk-physical-device (proto.physical-device/get-vk-physical-device
                               physical-device)
-          _ (-> (VK13/vkCreateDevice vk-physical-device
+          _ (-> (VK12/vkCreateDevice vk-physical-device
                                      device-create-info
                                      nil
                                      device-p)
@@ -111,14 +111,14 @@
 (defn stop
   [{:keys [vk-device], :as this}]
   (println "stopping vulkan device")
-  (VK13/vkDestroyDevice vk-device nil)
+  (VK12/vkDestroyDevice vk-device nil)
   this)
 
 (defn get-physical-device [{:keys [physical-device]}] physical-device)
 
 (defn get-vk-device [{:keys [vk-device]}] vk-device)
 
-(defn wait-idle [{:keys [vk-device]}] (VK13/vkDeviceWaitIdle vk-device))
+(defn wait-idle [{:keys [vk-device]}] (VK12/vkDeviceWaitIdle vk-device))
 
 (defrecord Device [physical-device]
   proto.device/Device

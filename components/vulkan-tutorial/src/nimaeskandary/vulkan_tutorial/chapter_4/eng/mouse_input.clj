@@ -9,6 +9,7 @@
 
 (defn start
   [this window-handle]
+  (println "starting mouse input")
   (let [previous-pos (Vector2f. (float -1) (float -1))
         current-pos (Vector2f.)
         displ-vec (Vector2f.)
