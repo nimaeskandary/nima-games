@@ -48,7 +48,7 @@
         (proto.app-logic/update-fn app-logic window scene diff-time-millis)
         (reset! update-time-atom current-time)
         (swap! delta-update-atom dec)))
-    (proto.render/render render window scene)
+    (proto.render/render render)
     (reset! init-time-atom current-time)))
 
 (defn run

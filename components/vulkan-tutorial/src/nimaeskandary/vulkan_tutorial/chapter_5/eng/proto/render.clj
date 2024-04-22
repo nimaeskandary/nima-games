@@ -3,4 +3,4 @@
 (defprotocol Render
   (start [this])
   (stop [this])
-  (render [this window scene]))
+  (render [this]))
