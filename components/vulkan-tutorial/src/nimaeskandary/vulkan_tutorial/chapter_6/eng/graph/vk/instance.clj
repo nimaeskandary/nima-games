@@ -40,13 +40,14 @@
           _ (println (format "instance supports %d layers" num-layers))
           props-buff (VkLayerProperties/calloc num-layers stack)
           _ (VK12/vkEnumerateInstanceLayerProperties num-layers-buff props-buff)
-          supported-layers
-          (set (for [^Integer i (range num-layers)]
-                 (let [layer-name (-> props-buff
-                                      ^VkLayerProperties (.get i)
-                                      .layerNameString)]
-                   (println (format "supports layer %s" layer-name))
-                   layer-name)))]
+          supported-layers (set (for [^Integer i (range num-layers)]
+                                  (let [layer-name (-> props-buff
+                                                       ^VkLayerProperties
+                                                       (.get i)
+                                                       .layerNameString)]
+                                    ;;(println (format "supports layer %s"
+                                    ;;layer-name))
+                                    layer-name)))]
       (cond (supported-layers "VK_LAYER_KHRONOS_validation")
             ["VK_LAYER_KHRONOS_validation"]
             (supported-layers "VK_LAYER_LUNARG_standard_validation")
@@ -75,7 +76,7 @@
              (let [ext-name (-> props-buff
                                 ^VkExtensionProperties (.get i)
                                 .extensionNameString)]
-               (println (format "supports extension %s" ext-name))
+               ;;(println (format "supports extension %s" ext-name))
                ext-name))))))
 
 (defn create-debug-callback

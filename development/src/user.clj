@@ -1,5 +1,4 @@
-(ns user
-  (:require [nrepl.server :refer [start-server]]))
+(ns user)
 
 (set! *warn-on-reflection* true)
-(defonce nrepl (start-server :port 7888))
+;;(defonce nrepl (nrepl.server/start-server :port 7888))

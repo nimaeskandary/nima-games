@@ -45,7 +45,7 @@
       (-> (for [^Integer i (range num-exts)]
             (let [^VkExtensionProperties props (.get props-b i)
                   ext-name (.extensionNameString props)]
-              (println (format "supported device extension %s" ext-name))
+              ;;(println (format "supported device extension %s" ext-name))
               ext-name))
           set))))
 
