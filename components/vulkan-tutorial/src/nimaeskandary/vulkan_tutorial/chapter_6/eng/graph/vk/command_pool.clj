@@ -1,18 +1,22 @@
 (ns nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.command-pool
-  (:require [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.vulkan-utils
-             :as vulkan-utils]
-            [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.device :as
-             proto.device]
-            [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.command-pool :as
-             proto.command-pool])
+  (:require [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.device :as
+             vk.device]
+            [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.vulkan-utils
+             :as vulkan-utils])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK12 VkCommandPoolCreateInfo VkDevice)))
 
-(defn start
+(defprotocol CommandPoolI
+  (start [this])
+  (stop [this])
+  (get-device [this])
+  (get-vk-command-pool ^Long [this]))
+
+(defn -start
   [{:keys [device queue-family-index], :as this}]
   (println "starting command pool")
   (with-open [stack (MemoryStack/stackPush)]
-    (let [^VkDevice vk-device (proto.device/get-vk-device device)
+    (let [^VkDevice vk-device (vk.device/get-vk-device device)
           pool-info (-> (VkCommandPoolCreateInfo/calloc stack)
                         .sType$Default
                         (.flags
@@ -24,20 +28,20 @@
           vk-command-pool (.get long-b 0)]
       (assoc this :vk-command-pool vk-command-pool))))
 
-(defn stop
+(defn -stop
   [{:keys [device vk-command-pool], :as this}]
   (println "stopping command pool")
-  (let [vk-device (proto.device/get-vk-device device)]
+  (let [vk-device (vk.device/get-vk-device device)]
     (VK12/vkDestroyCommandPool vk-device vk-command-pool nil))
   this)
 
-(defn get-device [{:keys [device]}] device)
+(defn -get-device [{:keys [device]}] device)
 
-(defn get-vk-command-pool [{:keys [vk-command-pool]}] vk-command-pool)
+(defn -get-vk-command-pool [{:keys [vk-command-pool]}] vk-command-pool)
 
 (defrecord CommandPool [device queue-family-index]
-  proto.command-pool/CommandPool
-    (start [this] (start this))
-    (stop [this] (stop this))
-    (get-device [this] (get-device this))
-    (get-vk-command-pool [this] (get-vk-command-pool this)))
+  CommandPoolI
+    (start [this] (-start this))
+    (stop [this] (-stop this))
+    (get-device [this] (-get-device this))
+    (get-vk-command-pool [this] (-get-vk-command-pool this)))

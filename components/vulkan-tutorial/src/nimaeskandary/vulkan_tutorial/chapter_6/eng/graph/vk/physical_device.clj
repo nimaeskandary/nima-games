@@ -1,10 +1,8 @@
 (ns nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.physical-device
-  (:require [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.vulkan-utils
+  (:require [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.instance :as
+             vk.instance]
+            [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.vulkan-utils
              :as vulkan-utils]
-            [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.instance :as
-             proto.instance]
-            [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.physical-device
-             :as proto.physical-device]
             [nimaeskandary.vulkan-tutorial.chapter-6.utils :as utils])
   (:import (java.util.function Consumer)
            (org.lwjgl.system MemoryStack)
@@ -19,7 +17,17 @@
                              VkQueueFamilyProperties2
                              VkQueueFamilyProperties2$Buffer)))
 
-(defn start
+(defprotocol PhysicalDeviceI
+  (start [this])
+  (stop [this])
+  (get-device-name ^String [this])
+  (get-vk-mem-props [this])
+  (get-vk-physical-device ^VkPhysicalDevice [this])
+  (get-vk-physical-device-features [this])
+  (get-vk-physical-device-props [this])
+  (get-vk-queue-family-props ^VkQueueFamilyProperties2$Buffer [this]))
+
+(defn -start
   [{:keys [^VkPhysicalDevice vk-physical-device], :as this}]
   (println "starting physical device")
   (with-open [stack (MemoryStack/stackPush)]
@@ -80,12 +88,11 @@
              :vk-physical-device-features vk-physical-device-features
              :vk-mem-props vk-mem-props))))
 
-(defn stop
+(defn -stop
   [{:keys [vk-mem-props vk-physical-device-features vk-queue-family-props
            vk-device-exts vk-physical-device-props],
     :as this}]
-  (println (format "stopping physical device %s"
-                   (proto.physical-device/get-device-name this)))
+  (println (format "stopping physical device %s" (get-device-name this)))
   (.free vk-mem-props)
   (.free vk-physical-device-features)
   (.free vk-queue-family-props)
@@ -93,26 +100,38 @@
   (.free vk-physical-device-props)
   this)
 
-(defn get-device-name
+(defn -get-device-name
   [{:keys [^VkPhysicalDeviceProperties2 vk-physical-device-props]}]
   (-> (.properties vk-physical-device-props)
       .deviceNameString))
 
-(defn get-vk-mem-props [{:keys [vk-mem-props]}] vk-mem-props)
+(defn -get-vk-mem-props [{:keys [vk-mem-props]}] vk-mem-props)
 
-(defn get-vk-physical-device [{:keys [vk-physical-device]}] vk-physical-device)
+(defn -get-vk-physical-device [{:keys [vk-physical-device]}] vk-physical-device)
 
-(defn get-vk-physical-device-features
+(defn -get-vk-physical-device-features
   [{:keys [vk-physical-device-features]}]
   vk-physical-device-features)
 
-(defn get-vk-physical-device-props
+(defn -get-vk-physical-device-props
   [{:keys [vk-physical-device-props]}]
   vk-physical-device-props)
 
-(defn get-vk-queue-family-props
+(defn -get-vk-queue-family-props
   ^VkQueueFamilyProperties2$Buffer [{:keys [vk-queue-family-props]}]
   vk-queue-family-props)
+
+(defrecord PhysicalDevice [vk-physical-device]
+  PhysicalDeviceI
+    (start [this] (-start this))
+    (stop [this] (-stop this))
+    (get-device-name [this] (-get-device-name this))
+    (get-vk-mem-props [this] (-get-vk-mem-props this))
+    (get-vk-physical-device [this] (-get-vk-physical-device this))
+    (get-vk-physical-device-features [this]
+      (-get-vk-physical-device-features this))
+    (get-vk-physical-device-props [this] (-get-vk-physical-device-props this))
+    (get-vk-queue-family-props [this] (-get-vk-queue-family-props this)))
 
 (defn has-graphics-queue-family?
   [{:keys [^VkQueueFamilyProperties2$Buffer vk-queue-family-props]}]
@@ -144,23 +163,10 @@
                           ext-name))))
            first))))
 
-
-(defrecord PhysicalDevice [vk-physical-device]
-  proto.physical-device/PhysicalDevice
-    (start [this] (start this))
-    (stop [this] (stop this))
-    (get-device-name [this] (get-device-name this))
-    (get-vk-mem-props [this] (get-vk-mem-props this))
-    (get-vk-physical-device [this] (get-vk-physical-device this))
-    (get-vk-physical-device-features [this]
-      (get-vk-physical-device-features this))
-    (get-vk-physical-device-props [this] (get-vk-physical-device-props this))
-    (get-vk-queue-family-props [this] (get-vk-queue-family-props this)))
-
 (defn get-physical-devices
   [instance stack]
   (let [int-b (.mallocInt stack 1)
-        ^VkInstance vk-instance (proto.instance/get-vk-instance instance)
+        ^VkInstance vk-instance (vk.instance/get-vk-instance instance)
         _ (-> vk-instance
               (VK12/vkEnumeratePhysicalDevices int-b nil)
               (vulkan-utils/vk-check
@@ -177,7 +183,7 @@
   [instance preferred-device-name]
   (println "selecting physical devices")
   (with-open [stack (MemoryStack/stackPush)]
-    (let [^VkInstance vk-instance (proto.instance/get-vk-instance instance)
+    (let [^VkInstance vk-instance (vk.instance/get-vk-instance instance)
           p-physical-devices (get-physical-devices instance stack)
           num-devices (when p-physical-devices (.capacity p-physical-devices))
           _ (when (or (not num-devices) (not (pos? num-devices)))
@@ -190,10 +196,8 @@
                  :while (nil? @preferred-match)]
              (let [vk-physical-device
                    (VkPhysicalDevice. (.get p-physical-devices i) vk-instance)
-                   physical-device (proto.physical-device/start
-                                    (->PhysicalDevice vk-physical-device))
-                   device-name (proto.physical-device/get-device-name
-                                physical-device)]
+                   physical-device (start (->PhysicalDevice vk-physical-device))
+                   device-name (get-device-name physical-device)]
                (if (and (has-graphics-queue-family? physical-device)
                         (has-khr-swap-chain-extension? physical-device))
                  (do (println (format "device %s supports required extensions"
@@ -207,7 +211,7 @@
                  (do (println (format
                                "device %s does not support required extensions"
                                device-name))
-                     (proto.physical-device/stop physical-device))))))
+                     (stop physical-device))))))
           ;; if the preferred device is not found arbitrarily pick the
           ;; first, could be better and pick the best available one
           selected-physical-device (or @preferred-match
@@ -215,10 +219,9 @@
           _ (doseq [to-clean (if @preferred-match
                                other-valid-devices
                                (rest other-valid-devices))]
-              (when to-clean (proto.physical-device/stop to-clean)))]
+              (when to-clean (stop to-clean)))]
       (when (not selected-physical-device)
         (throw (Exception. "no valid physical devices found")))
       (println (format "selected physical device %s"
-                       (proto.physical-device/get-device-name
-                        selected-physical-device)))
+                       (get-device-name selected-physical-device)))
       selected-physical-device)))

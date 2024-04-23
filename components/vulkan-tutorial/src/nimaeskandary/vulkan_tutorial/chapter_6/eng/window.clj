@@ -1,9 +1,6 @@
 (ns nimaeskandary.vulkan-tutorial.chapter-6.eng.window
-  (:require
-    [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.window :as proto.window]
-    [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.mouse-input :as
-     proto.mouse-input]
-    [nimaeskandary.vulkan-tutorial.chapter-6.eng.mouse-input :as mouse-input])
+  (:require [nimaeskandary.vulkan-tutorial.chapter-6.eng.mouse-input :as
+             eng.mouse-input])
   (:import (org.lwjgl.glfw Callbacks
                            GLFW
                            GLFWFramebufferSizeCallbackI
@@ -11,7 +8,23 @@
                            GLFWVulkan)
            (org.lwjgl.system MemoryUtil)))
 
-(defn start
+(defprotocol WindowI
+  (start [this])
+  (stop [this])
+  (^Integer get-width [this])
+  (^Integer get-height [this])
+  (get-mouse-input [this])
+  (get-window-handle [this])
+  (is-key-pressed? [this key-code])
+  (is-resized? [this])
+  (poll-events [this])
+  (reset-resized [this])
+  (resize [this width height])
+  (set-resized [this resized?])
+  (set-should-close [this])
+  (should-close? [this]))
+
+(defn -start
   [{:keys [^String title ^GLFWKeyCallbackI key-callback], :as this}]
   (println "starting window")
   (when (not (GLFW/glfwInit)) (throw (Exception. "unable to start GLFW")))
@@ -36,11 +49,11 @@
                     :resized? (atom false))
         _ (do (when (= (MemoryUtil/NULL) window-handle)
                 (throw (Exception. "Failed to create the GLFW window")))
-              (GLFW/glfwSetFramebufferSizeCallback
-               window-handle
-               (reify
-                GLFWFramebufferSizeCallbackI
-                  (invoke [_ _ w h] (proto.window/resize this w h))))
+              (GLFW/glfwSetFramebufferSizeCallback window-handle
+                                                   (reify
+                                                    GLFWFramebufferSizeCallbackI
+                                                      (invoke [_ _ w h]
+                                                        (resize this w h))))
               (GLFW/glfwSetKeyCallback
                window-handle
                (reify
@@ -56,12 +69,12 @@
                                scancode
                                action
                                mods))))))
-        mouse-input (proto.mouse-input/start (mouse-input/->MouseInput
-                                              window-handle))]
+        mouse-input (eng.mouse-input/start (eng.mouse-input/->MouseInput
+                                            window-handle))]
     (assoc this :mouse-input mouse-input)))
 
 
-(defn stop
+(defn -stop
   [{:keys [window-handle], :as this}]
   (println "stopping window")
   (Callbacks/glfwFreeCallbacks window-handle)
@@ -69,54 +82,54 @@
   (GLFW/glfwTerminate)
   this)
 
-(defn get-height [this] (deref (:height this)))
+(defn -get-height [this] (deref (:height this)))
 
-(defn get-width [this] (deref (:width this)))
+(defn -get-width [this] (deref (:width this)))
 
-(defn get-mouse-input [this] (:mouse-input this))
+(defn -get-mouse-input [this] (:mouse-input this))
 
-(defn get-window-handle [this] (:window-handle this))
+(defn -get-window-handle [this] (:window-handle this))
 
-(defn is-key-pressed?
+(defn -is-key-pressed?
   [this key-code]
   (= GLFW/GLFW_PRESS (GLFW/glfwGetKey (:window-handle this) key-code)))
 
-(defn is-resized? [this] (deref (:resized? this)))
+(defn -is-resized? [this] (deref (:resized? this)))
 
-(defn poll-events
+(defn -poll-events
   [this]
   (GLFW/glfwPollEvents)
-  (proto.mouse-input/input (:mouse-input this)))
+  (eng.mouse-input/input (:mouse-input this)))
 
-(defn reset-resized [this] (reset! (:resized? this) false))
+(defn -reset-resized [this] (reset! (:resized? this) false))
 
-(defn resize
+(defn -resize
   [{:keys [resized? width height]} w h]
   (reset! resized? true)
   (reset! width w)
   (reset! height h))
 
-(defn set-resized [this value] (reset! (:resized? this) value))
+(defn -set-resized [this value] (reset! (:resized? this) value))
 
-(defn set-should-close
+(defn -set-should-close
   [this]
   (GLFW/glfwSetWindowShouldClose (:window-handle this) true))
 
-(defn should-close? [this] (GLFW/glfwWindowShouldClose (:window-handle this)))
+(defn -should-close? [this] (GLFW/glfwWindowShouldClose (:window-handle this)))
 
 (defrecord Window [title key-callback]
-  proto.window/Window
-    (start [this] (start this))
-    (stop [this] (stop this))
-    (get-height [this] (get-height this))
-    (get-width [this] (get-width this))
-    (get-mouse-input [this] (get-mouse-input this))
-    (get-window-handle [this] (get-window-handle this))
-    (is-key-pressed? [this key-code] (is-key-pressed? this key-code))
-    (is-resized? [this] (is-resized? this))
-    (poll-events [this] (poll-events this))
-    (reset-resized [this] (reset-resized this))
-    (resize [this width height] (resize this width height))
-    (set-resized [this value] (set-resized this value))
-    (set-should-close [this] (set-should-close this))
-    (should-close? [this] (should-close? this)))
+  WindowI
+    (start [this] (-start this))
+    (stop [this] (-stop this))
+    (get-height [this] (-get-height this))
+    (get-width [this] (-get-width this))
+    (get-mouse-input [this] (-get-mouse-input this))
+    (get-window-handle [this] (-get-window-handle this))
+    (is-key-pressed? [this key-code] (-is-key-pressed? this key-code))
+    (is-resized? [this] (-is-resized? this))
+    (poll-events [this] (-poll-events this))
+    (reset-resized [this] (-reset-resized this))
+    (resize [this width height] (-resize this width height))
+    (set-resized [this value] (-set-resized this value))
+    (set-should-close [this] (-set-should-close this))
+    (should-close? [this] (-should-close? this)))

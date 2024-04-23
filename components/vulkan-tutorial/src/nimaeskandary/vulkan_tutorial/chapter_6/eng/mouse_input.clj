@@ -1,13 +1,20 @@
 (ns nimaeskandary.vulkan-tutorial.chapter-6.eng.mouse-input
-  (:require [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.mouse-input :as
-             proto.mouse-input])
   (:import (org.joml Vector2f)
            (org.lwjgl.glfw GLFW
                            GLFWCursorEnterCallbackI
                            GLFWCursorPosCallbackI
                            GLFWMouseButtonCallbackI)))
 
-(defn start
+(defprotocol MouseInputI
+  (start [this])
+  (stop [this])
+  (get-current-pos [this])
+  (get-displ-vec [this])
+  (input [this])
+  (is-left-button-pressed? [this])
+  (is-right-button-pressed? [this]))
+
+(defn -start
   [this window-handle]
   (println "starting mouse input")
   (let [previous-pos (Vector2f. (float -1) (float -1))
@@ -46,13 +53,13 @@
            :right-button-pressed? right-button-pressed?
            :in-window? in-window?)))
 
-(defn stop [_])
+(defn -stop [_])
 
-(defn get-current-pos [this] (:current-pos this))
+(defn -get-current-pos [this] (:current-pos this))
 
-(defn get-displ-vec [this] (:displ-vec this))
+(defn -get-displ-vec [this] (:displ-vec this))
 
-(defn input
+(defn -input
   [{:keys [previous-pos current-pos displ-vec in-window?]}]
   (.set displ-vec (float 0) (float 0))
   (when (and (> (.x previous-pos) 0) (> (.y previous-pos) 0) @in-window?)
@@ -65,16 +72,16 @@
       (when rotate-y? (set! (.-x displ-vec) (float delta-y))))
     (.set previous-pos (.x current-pos) (.y current-pos))))
 
-(defn is-left-button-pressed? [this] (deref (:left-button-pressed? this)))
+(defn -is-left-button-pressed? [this] (deref (:left-button-pressed? this)))
 
-(defn is-rigth-button-pressed? [this] (deref (:right-button-pressed? this)))
+(defn -is-right-button-pressed? [this] (deref (:right-button-pressed? this)))
 
 (defrecord MouseInput [window-handle]
-  proto.mouse-input/MouseInput
-    (start [this] (start this window-handle))
-    (stop [this] (stop this))
-    (get-current-pos [this] (get-current-pos this))
-    (get-displ-vec [this] (get-displ-vec this))
-    (input [this] (input this))
-    (is-left-button-pressed? [this] (is-left-button-pressed? this))
-    (is-right-button-pressed? [this] (is-rigth-button-pressed? this)))
+  MouseInputI
+    (start [this] (-start this window-handle))
+    (stop [this] (-stop this))
+    (get-current-pos [this] (-get-current-pos this))
+    (get-displ-vec [this] (-get-displ-vec this))
+    (input [this] (-input this))
+    (is-left-button-pressed? [this] (-is-left-button-pressed? this))
+    (is-right-button-pressed? [this] (-is-right-button-pressed? this)))

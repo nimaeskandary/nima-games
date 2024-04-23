@@ -1,10 +1,8 @@
 (ns nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.image-view
-  (:require [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.vulkan-utils
-             :as vulkan-utils]
-            [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.device :as
-             proto.device]
-            [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.image-view :as
-             proto.image-view])
+  (:require [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.device :as
+             vk.device]
+            [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.vulkan-utils
+             :as vulkan-utils])
   (:import (java.util.function Consumer)
            (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK12
@@ -12,7 +10,14 @@
                              VkImageSubresourceRange
                              VkImageViewCreateInfo)))
 
-(defn start
+(defprotocol ImageViewI
+  (start [this])
+  (stop [this])
+  (get-aspect-mask [this])
+  (get-mip-levels [this])
+  (get-vk-image-view ^Long [this]))
+
+(defn -start
   [{:keys [device vk-image],
     {:keys [view-type format mip-levels base-array-layer layer-count
             aspect-mask]}
@@ -36,33 +41,31 @@
                                        (.levelCount mip-levels)
                                        (.baseArrayLayer base-array-layer)
                                        (.layerCount layer-count))))))
-          ^VkDevice vk-device (proto.device/get-vk-device device)]
+          ^VkDevice vk-device (vk.device/get-vk-device device)]
       (-> (VK12/vkCreateImageView vk-device view-create-info nil long-b)
           (vulkan-utils/vk-check "failed to create image view"))
       (assoc this :vk-image-view (.get long-b 0)))))
 
-(defn stop
+(defn -stop
   [{:keys [device vk-image-view], :as this}]
-  (VK12/vkDestroyImageView (proto.device/get-vk-device device)
-                           vk-image-view
-                           nil)
+  (VK12/vkDestroyImageView (vk.device/get-vk-device device) vk-image-view nil)
   this)
 
-(defn get-aspect-mask
+(defn -get-aspect-mask
   [{:keys [image-view-data]}]
   (:aspect-mask image-view-data))
 
-(defn get-mip-levels [{:keys [image-view-data]}] (:mip-levels image-view-data))
+(defn -get-mip-levels [{:keys [image-view-data]}] (:mip-levels image-view-data))
 
-(defn get-vk-image-view [{:keys [vk-image-view]}] vk-image-view)
+(defn -get-vk-image-view [{:keys [vk-image-view]}] vk-image-view)
 
 (defrecord ImageView [device vk-image image-view-data]
-  proto.image-view/ImageView
-    (start [this] (start this))
-    (stop [this] (stop this))
-    (get-aspect-mask [this] (get-aspect-mask this))
-    (get-mip-levels [this] (get-mip-levels this))
-    (get-vk-image-view [this] (get-vk-image-view this)))
+  ImageViewI
+    (start [this] (-start this))
+    (stop [this] (-stop this))
+    (get-aspect-mask [this] (-get-aspect-mask this))
+    (get-mip-levels [this] (-get-mip-levels this))
+    (get-vk-image-view [this] (-get-vk-image-view this)))
 
 (defrecord ImageViewData [format aspect-mask base-array-layer layer-count
                           mip-levels view-type])

@@ -1,26 +1,20 @@
 (ns nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.swap-chain
   (:require
+    [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.device :as vk.device]
+    [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.physical-device :as
+     vk.physical-device]
+    [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.queue :as vk.queue]
+    [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.semaphore :as
+     vk.semaphore]
+    [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.surface :as
+     vk.surface]
     [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.vulkan-utils :as
      vulkan-utils]
     [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.image-view :as
      vk.image-view]
     [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.sync-semaphores :as
      vk.sync-semaphores]
-    [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.device :as proto.device]
-    [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.physical-device :as
-     proto.physical-device]
-    [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.queue :as proto.queue]
-    [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.semaphore :as
-     proto.semaphore]
-    [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.surface :as
-     proto.surface]
-    [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.sync-semaphores :as
-     proto.sync-semaphores]
-    [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.window :as proto.window]
-    [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.image-view :as
-     proto.image-view]
-    [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.swap-chain :as
-     proto.swap-chain])
+    [nimaeskandary.vulkan-tutorial.chapter-6.eng.window :as eng.window])
   (:import (org.lwjgl.system MemoryStack MemoryUtil)
            (org.lwjgl.vulkan KHRSurface
                              KHRSwapchain
@@ -33,6 +27,20 @@
                              VkSurfaceCapabilitiesKHR
                              VkSurfaceFormatKHR
                              VkSwapchainCreateInfoKHR)))
+
+(defprotocol SwapChainI
+  (start [this])
+  (stop [this])
+  (get-image-views [this])
+  (get-num-images [this])
+  (get-surface-format [this])
+  (get-swap-chain-extent ^VkExtent2D [this])
+  (get-vk-swap-chain ^Long [this])
+  (get-device [this])
+  (acquire-next-image [this])
+  (present-image [this queue])
+  (get-current-frame [this])
+  (get-sync-semaphores [this]))
 
 (defrecord SurfaceFormat [image-format color-space])
 
@@ -96,7 +104,7 @@
                .currentExtent
                .width))
       ;; surface size undefined, set to window size if within bounds
-      (let [width (Math/min ^Integer (proto.window/get-width window)
+      (let [width (Math/min ^Integer (eng.window/get-width window)
                             (-> surf-capabilities
                                 .maxImageExtent
                                 .width))
@@ -104,7 +112,7 @@
                             (-> surf-capabilities
                                 .minImageExtent
                                 .width))
-            height (Math/min ^Integer (proto.window/get-height window)
+            height (Math/min ^Integer (eng.window/get-height window)
                              (-> surf-capabilities
                                  .maxImageExtent
                                  .height))
@@ -121,7 +129,7 @@
 (defn create-image-views
   [^MemoryStack stack device ^Long swap-chain ^Integer format]
   (let [int-b (.mallocInt stack 1)
-        ^VkDevice vk-device (proto.device/get-vk-device device)
+        ^VkDevice vk-device (vk.device/get-vk-device device)
         _
         (->
           (KHRSwapchain/vkGetSwapchainImagesKHR vk-device swap-chain int-b nil)
@@ -137,22 +145,22 @@
                          format
                          VK12/VK_IMAGE_ASPECT_COLOR_BIT)]
     (doall (map (fn [^Integer i]
-                  (proto.image-view/start (vk.image-view/->ImageView
-                                           device
-                                           (.get swap-chain-images i)
-                                           image-view-data)))
+                  (vk.image-view/start (vk.image-view/->ImageView
+                                        device
+                                        (.get swap-chain-images i)
+                                        image-view-data)))
                 (range num-images)))))
 
-(defn start
+(defn -start
   [{:keys [device surface window requested-images vsync? presentation-queue
            concurrent-queues],
     :as this}]
   (println "starting vulkan swap chain")
   (with-open [stack (MemoryStack/stackPush)]
-    (let [physical-device (proto.device/get-physical-device device)
-          vk-physical-device (proto.physical-device/get-vk-physical-device
+    (let [physical-device (vk.device/get-physical-device device)
+          vk-physical-device (vk.physical-device/get-vk-physical-device
                               physical-device)
-          vk-surface (proto.surface/get-vk-surface surface)
+          vk-surface (vk.surface/get-vk-surface surface)
           ;; get surface capabilities
           surf-capabilities (VkSurfaceCapabilitiesKHR/calloc stack)
           _ (-> (KHRSurface/vkGetPhysicalDeviceSurfaceCapabilitiesKHR
@@ -180,12 +188,12 @@
               (.compositeAlpha KHRSurface/VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
               (.clipped true)
               (.presentMode present-mode))
-          presentation-queue-index (proto.queue/get-queue-family-index
+          presentation-queue-index (vk.queue/get-queue-family-index
                                     presentation-queue)
           indices (->> concurrent-queues
                        (reduce (fn [results cq]
-                                 (let [cq-index
-                                       (proto.queue/get-queue-family-index cq)]
+                                 (let [cq-index (vk.queue/get-queue-family-index
+                                                 cq)]
                                    (if (not= presentation-queue-index cq-index)
                                      (conj results cq-index)
                                      results)))
@@ -203,7 +211,7 @@
               (.imageSharingMode vk-swap-chain-create-info
                                  VK12/VK_SHARING_MODE_EXCLUSIVE))
           long-b (.mallocLong stack 1)
-          _ (-> (KHRSwapchain/vkCreateSwapchainKHR (proto.device/get-vk-device
+          _ (-> (KHRSwapchain/vkCreateSwapchainKHR (vk.device/get-vk-device
                                                     device)
                                                    vk-swap-chain-create-info
                                                    nil
@@ -215,7 +223,7 @@
                                           vk-swap-chain
                                           (:image-format surface-format))
           sync-semaphores (doall (for [_ image-views]
-                                   (proto.sync-semaphores/start
+                                   (vk.sync-semaphores/start
                                     (vk.sync-semaphores/->SyncSemaphores
                                      device))))]
       (assoc this
@@ -226,26 +234,26 @@
              :sync-semaphores sync-semaphores
              :current-frame-atom (atom 0)))))
 
-(defn stop
+(defn -stop
   [{:keys [swap-chain-extent image-views device vk-swap-chain sync-semaphores],
     :as this}]
   (println "destroying vulkan swap chain")
   (.free swap-chain-extent)
-  (doseq [image-view image-views] (proto.image-view/stop image-view))
+  (doseq [image-view image-views] (vk.image-view/stop image-view))
   (doseq [sync-semaphore sync-semaphores]
-    (proto.sync-semaphores/stop sync-semaphore))
-  (KHRSwapchain/vkDestroySwapchainKHR (proto.device/get-vk-device device)
+    (vk.sync-semaphores/stop sync-semaphore))
+  (KHRSwapchain/vkDestroySwapchainKHR (vk.device/get-vk-device device)
                                       vk-swap-chain
                                       nil)
   this)
 
-(defn acquire-next-image
+(defn -acquire-next-image
   [{:keys [device sync-semaphores current-frame-atom ^Long vk-swap-chain]}]
   (with-open [stack (MemoryStack/stackPush)]
     (let [vk-semaphore (-> (nth sync-semaphores @current-frame-atom)
-                           proto.sync-semaphores/get-image-acquisition-semaphore
-                           proto.semaphore/get-vk-semaphore)
-          vk-device (proto.device/get-vk-device device)
+                           vk.sync-semaphores/get-image-acquisition-semaphore
+                           vk.semaphore/get-vk-semaphore)
+          vk-device (vk.device/get-vk-device device)
           int-b (.mallocInt stack 1)
           status (KHRSwapchain/vkAcquireNextImageKHR vk-device
                                                      vk-swap-chain
@@ -264,14 +272,14 @@
       (reset! current-frame-atom (.get int-b 0))
       @resize?)))
 
-(defn present-image
+(defn -present-image
   [{:keys [sync-semaphores ^Long vk-swap-chain current-frame-atom image-views]}
    queue]
   (with-open [stack (MemoryStack/stackPush)]
-    (let [^VkQueue vk-queue (proto.queue/get-vk-queue queue)
+    (let [^VkQueue vk-queue (vk.queue/get-vk-queue queue)
           vk-semaphore (-> (nth sync-semaphores @current-frame-atom)
-                           proto.sync-semaphores/get-render-complete-semaphore
-                           proto.semaphore/get-vk-semaphore)
+                           vk.sync-semaphores/get-render-complete-semaphore
+                           vk.semaphore/get-vk-semaphore)
           present-info (-> (VkPresentInfoKHR/calloc stack)
                            .sType$Default
                            (.pWaitSemaphores (.longs stack vk-semaphore))
@@ -290,34 +298,34 @@
       (reset! current-frame-atom (mod (inc @current-frame-atom)
                                       (count image-views))))))
 
-(defn get-image-views [{:keys [image-views]}] image-views)
+(defn -get-image-views [{:keys [image-views]}] image-views)
 
-(defn get-num-images [{:keys [image-views]}] (count image-views))
+(defn -get-num-images [{:keys [image-views]}] (count image-views))
 
-(defn get-surface-format [{:keys [surface-format]}] surface-format)
+(defn -get-surface-format [{:keys [surface-format]}] surface-format)
 
-(defn get-swap-chain-extent [{:keys [swap-chain-extent]}] swap-chain-extent)
+(defn -get-swap-chain-extent [{:keys [swap-chain-extent]}] swap-chain-extent)
 
-(defn get-vk-swap-chain [{:keys [vk-swap-chain]}] vk-swap-chain)
+(defn -get-vk-swap-chain [{:keys [vk-swap-chain]}] vk-swap-chain)
 
-(defn get-device [{:keys [device]}] device)
+(defn -get-device [{:keys [device]}] device)
 
-(defn get-current-frame [{:keys [current-frame-atom]}] @current-frame-atom)
+(defn -get-current-frame [{:keys [current-frame-atom]}] @current-frame-atom)
 
-(defn get-sync-semaphores [{:keys [sync-semaphores]}] sync-semaphores)
+(defn -get-sync-semaphores [{:keys [sync-semaphores]}] sync-semaphores)
 
 (defrecord SwapChain [device surface window requested-images vsync?
                       presentation-queue concurrent-queues]
-  proto.swap-chain/SwapChain
-    (start [this] (start this))
-    (stop [this] (stop this))
-    (get-image-views [this] (get-image-views this))
-    (get-num-images [this] (get-num-images this))
-    (get-surface-format [this] (get-surface-format this))
-    (get-swap-chain-extent [this] (get-swap-chain-extent this))
-    (get-vk-swap-chain [this] (get-vk-swap-chain this))
-    (get-device [this] (get-device this))
-    (acquire-next-image [this] (acquire-next-image this))
-    (present-image [this queue] (present-image this queue))
-    (get-current-frame [this] (get-current-frame this))
-    (get-sync-semaphores [this] (get-sync-semaphores this)))
+  SwapChainI
+    (start [this] (-start this))
+    (stop [this] (-stop this))
+    (get-image-views [this] (-get-image-views this))
+    (get-num-images [this] (-get-num-images this))
+    (get-surface-format [this] (-get-surface-format this))
+    (get-swap-chain-extent [this] (-get-swap-chain-extent this))
+    (get-vk-swap-chain [this] (-get-vk-swap-chain this))
+    (get-device [this] (-get-device this))
+    (acquire-next-image [this] (-acquire-next-image this))
+    (present-image [this queue] (-present-image this queue))
+    (get-current-frame [this] (-get-current-frame this))
+    (get-sync-semaphores [this] (-get-sync-semaphores this)))

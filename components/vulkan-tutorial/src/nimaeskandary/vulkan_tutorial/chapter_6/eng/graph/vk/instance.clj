@@ -2,8 +2,6 @@
   (:require [clojure.set :as set]
             [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.vulkan-utils
              :as vulkan-utils]
-            [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.instance :as
-             proto.instance]
             [nimaeskandary.vulkan-tutorial.chapter-6.utils :as utils])
   (:import (org.lwjgl.glfw GLFWVulkan)
            (org.lwjgl.system MemoryStack MemoryUtil)
@@ -19,6 +17,11 @@
                              VkInstanceCreateInfo
                              KHRPortabilityEnumeration)))
 
+(defprotocol InstanceI
+  (start [this])
+  (stop [this])
+  (get-vk-instance [this]))
+
 (def bitmask:message-severity
   (bit-or EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT
           EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT))
@@ -27,7 +30,6 @@
           EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT
           EXTDebugUtils/VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT))
 (def ext:portability "VK_KHR_portability_enumeration")
-
 
 (defn get-supported-validation-layers
   []
@@ -116,7 +118,7 @@
                                      (.pMessageString callback-data))))
             (VK12/VK_FALSE)))))))
 
-(defn start
+(defn -start
   [{:keys [validate?], :as this}]
   (println "starting vulkan instance")
   (with-open [stack (MemoryStack/stackPush)]
@@ -222,7 +224,7 @@
              :debug-utils debug-utils
              :vk-debug-handle vk-debug-handle))))
 
-(defn stop
+(defn -stop
   [{:keys [vk-instance vk-debug-handle debug-utils], :as this}]
   (println "stopping vulkan instance")
   (when (not= VK12/VK_NULL_HANDLE vk-debug-handle)
@@ -236,10 +238,10 @@
         .free))
   this)
 
-(defn get-vk-instance [this] (:vk-instance this))
+(defn -get-vk-instance [this] (:vk-instance this))
 
 (defrecord Instance [validate?]
-  proto.instance/Instance
-    (start [this] (start this))
-    (stop [this] (stop this))
-    (get-vk-instance [this] (get-vk-instance this)))
+  InstanceI
+    (start [this] (-start this))
+    (stop [this] (-stop this))
+    (get-vk-instance [this] (-get-vk-instance this)))

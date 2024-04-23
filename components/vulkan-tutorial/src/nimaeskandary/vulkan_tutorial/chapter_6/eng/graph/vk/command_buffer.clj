@@ -1,12 +1,10 @@
 (ns nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.command-buffer
-  (:require [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.vulkan-utils
-             :as vulkan-utils]
-            [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.command-pool :as
-             proto.command-pool]
-            [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.device :as
-             proto.device]
-            [nimaeskandary.vulkan-tutorial.chapter-6.eng.proto.command-buffer
-             :as proto.command-buffer])
+  (:require [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.command-pool
+             :as vk.command-pool]
+            [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.device :as
+             vk.device]
+            [nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.vulkan-utils
+             :as vulkan-utils])
   (:import (org.lwjgl.system MemoryStack)
            (org.lwjgl.vulkan VK12
                              VkCommandBuffer
@@ -15,16 +13,25 @@
                              VkCommandBufferInheritanceInfo
                              VkDevice)))
 
+(defprotocol CommandBufferI
+  (start [this])
+  (stop [this])
+  (begin-recording [this]
+                   [this inheritance-info])
+  (end-recording [this])
+  (get-vk-command-buffer ^VkCommandBuffer [this])
+  (reset [this]))
+
 (defrecord InheritanceInfo [^Long vk-render-pass ^Long vk-frame-buffer
                             ^Integer sub-pass])
 
-(defn start
+(defn -start
   [{:keys [command-pool primary?], :as this}]
   (println "starting command buffer")
   (with-open [stack (MemoryStack/stackPush)]
-    (let [^VkDevice vk-device (-> (proto.command-pool/get-device command-pool)
-                                  proto.device/get-vk-device)
-          vk-command-pool (proto.command-pool/get-vk-command-pool command-pool)
+    (let [^VkDevice vk-device (-> (vk.command-pool/get-device command-pool)
+                                  vk.device/get-vk-device)
+          vk-command-pool (vk.command-pool/get-vk-command-pool command-pool)
           allocate-info (-> (VkCommandBufferAllocateInfo/calloc stack)
                             .sType$Default
                             (.commandPool vk-command-pool)
@@ -40,17 +47,17 @@
           vk-command-buffer (VkCommandBuffer. (.get pointer-b 0) vk-device)]
       (assoc this :vk-command-buffer vk-command-buffer))))
 
-(defn stop
+(defn -stop
   [{:keys [command-pool ^VkCommandBuffer vk-command-buffer], :as this}]
   (println "stopping command buffer")
-  (let [vk-device (-> (proto.command-pool/get-device command-pool)
-                      proto.device/get-vk-device)
-        ^Long vk-command-pool (proto.command-pool/get-vk-command-pool
+  (let [vk-device (-> (vk.command-pool/get-device command-pool)
+                      vk.device/get-vk-device)
+        ^Long vk-command-pool (vk.command-pool/get-vk-command-pool
                                command-pool)]
     (VK12/vkFreeCommandBuffers vk-device vk-command-pool vk-command-buffer))
   this)
 
-(defn begin-recording
+(defn -begin-recording
   ([this] (begin-recording this nil))
   ([{:keys [vk-command-buffer primary? one-time-submit?]}
     {:keys [vk-render-pass vk-frame-buffer sub-pass], :as inheritance-info}]
@@ -75,24 +82,26 @@
        (-> (VK12/vkBeginCommandBuffer vk-command-buffer command-buff-info)
            (vulkan-utils/vk-check "failed to begin command buffer"))))))
 
-(defn end-recording
+(defn -end-recording
   [{:keys [vk-command-buffer]}]
   (-> (VK12/vkEndCommandBuffer vk-command-buffer)
       (vulkan-utils/vk-check "failed to end command buffer")))
 
-(defn get-vk-command-buffer [{:keys [vk-command-buffer]}] vk-command-buffer)
+(defn -get-vk-command-buffer [{:keys [vk-command-buffer]}] vk-command-buffer)
 
-(defn reset
+(defn -reset
   [{:keys [vk-command-buffer]}]
   (VK12/vkResetCommandBuffer
    vk-command-buffer
    VK12/VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT))
 
 (defrecord CommandBuffer [command-pool primary? one-time-submit?]
-  proto.command-buffer/CommandBuffer
-    (start [this] (start this))
-    (stop [this] (stop this))
-    (begin-recording [this] (begin-recording this))
-    (end-recording [this] (end-recording this))
-    (get-vk-command-buffer [this] (get-vk-command-buffer this))
-    (reset [this] (reset this)))
+  CommandBufferI
+    (start [this] (-start this))
+    (stop [this] (-stop this))
+    (begin-recording [this] (-begin-recording this))
+    (begin-recording [this inheritance-info]
+      (-begin-recording this inheritance-info))
+    (end-recording [this] (-end-recording this))
+    (get-vk-command-buffer [this] (-get-vk-command-buffer this))
+    (reset [this] (-reset this)))
