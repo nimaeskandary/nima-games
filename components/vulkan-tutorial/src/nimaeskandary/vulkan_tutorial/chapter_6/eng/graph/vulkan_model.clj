@@ -33,7 +33,7 @@
   (println "stopping vulkan model")
   (doseq [vk-mesh @vulkan-mesh-list-atom] (graph.vulkan-mesh/stop vk-mesh)))
 
-(defn -get-model-id [{:keys [model-id]}] (model-id))
+(defn -get-model-id [{:keys [model-id]}] model-id)
 
 (defn -get-vulkan-mesh-list-atom
   [{:keys [vulkan-mesh-list-atom]}]

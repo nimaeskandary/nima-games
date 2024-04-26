@@ -226,6 +226,7 @@
                                     (vk.pipeline/get-vk-pipeline pipeline))
           viewport (-> (VkViewport/calloc 1 stack)
                        (.x 0)
+                       (.y height)
                        (.height (- height))
                        (.width width)
                        (.minDepth 0.0)

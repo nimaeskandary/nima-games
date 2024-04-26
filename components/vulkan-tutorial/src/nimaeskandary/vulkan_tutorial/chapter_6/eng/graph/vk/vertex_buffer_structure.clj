@@ -19,10 +19,11 @@
   (println "starting vertex buffer structure")
   (let [vi-attrs (VkVertexInputAttributeDescription/calloc number-of-attributes)
         vi-bindings (VkVertexInputBindingDescription/calloc 1)
-        vi (VkPipelineVertexInputStateCreateInfo/calloc)]
-    (-> ^VkVertexInputAttributeDescription (.get vi-attrs 0)
+        vi (VkPipelineVertexInputStateCreateInfo/calloc)
+        i 0]
+    (-> ^VkVertexInputAttributeDescription (.get vi-attrs i)
         (.binding 0)
-        (.location 0)
+        (.location i)
         (.format VK12/VK_FORMAT_R32G32B32_SFLOAT)
         (.offset 0))
     (-> ^VkVertexInputBindingDescription (.get vi-bindings 0)
@@ -32,10 +33,12 @@
     (assoc this
            :vi-attrs vi-attrs
            :vi-bindings vi-bindings
-           :vi (-> vi
-                   .sType$Default
-                   (.pVertexAttributeDescriptions vi-attrs)
-                   (.pVertexBindingDescriptions vi-bindings)))))
+           :vi
+           (-> vi
+               (.sType
+                VK12/VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
+               (.pVertexAttributeDescriptions vi-attrs)
+               (.pVertexBindingDescriptions vi-bindings)))))
 
 (defn -stop
   [{:keys [^VkPipelineVertexInputStateCreateInfo vi

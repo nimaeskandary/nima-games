@@ -23,12 +23,12 @@
   (with-open [stack (MemoryStack/stackPush)]
     (let [p-code (-> (.malloc stack (alength code))
                      (.put 0 code))
-          module-crete-info (-> (VkShaderModuleCreateInfo/calloc stack)
-                                .sType$Default
-                                (.pCode p-code))
+          module-create-info (-> (VkShaderModuleCreateInfo/calloc stack)
+                                 .sType$Default
+                                 (.pCode p-code))
           long-b (.mallocLong stack 1)]
       (-> (VK12/vkCreateShaderModule ^VkDevice (vk.device/get-vk-device device)
-                                     module-crete-info
+                                     module-create-info
                                      nil
                                      long-b)
           (vulkan-utils/vk-check "failed to create shader module"))
@@ -115,10 +115,7 @@
                (let [shader-code (slurp glsl-resource)
                      compiled-shader (compile-shader shader-code shader-type)]
                  (println "done compiling")
-                 (io/copy compiled-shader (io/file spv-shader-file-path))))
-           ;;(Files/write (.toPath (io/file (str gls-shader-file-path
-           ;;".spv"))) compiled-shader (into-array OpenOption
-           ;;[StandardOpenOption/CREATE]))))
+                 (io/copy compiled-shader spv-output)))
            (println (format "%s already exists, loading compiled version"
                             spv-output))))
        (catch IOException e (throw e))))

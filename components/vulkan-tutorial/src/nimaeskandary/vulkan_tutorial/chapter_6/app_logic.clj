@@ -14,12 +14,10 @@
 (defn- -init
   [_ _window _scene render]
   (let [model-id "TriangleModel"
-        mesh-data (scene.mesh-data/->MeshData
-                   (float-array [-0.5 -0.5 0.0 0.0 0.5 0.0 0.5 -0.5 0.0])
-                   (int-array [0 1 2]))
-        mesh-data-list [mesh-data]
-        model-data (scene.mesh-data/->ModelData model-id mesh-data-list)
-        model-data-list [model-data]]
+        mesh-data-list [(scene.mesh-data/->MeshData
+                         (float-array [-0.5 -0.5 0.0 0.0 0.5 0.0 0.5 -0.5 0.0])
+                         (int-array [0 1 2]))]
+        model-data-list [(scene.mesh-data/->ModelData model-id mesh-data-list)]]
     (graph.render/load-models render model-data-list)))
 
 (defrecord AppLogic []

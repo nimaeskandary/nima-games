@@ -6,9 +6,9 @@
   (start [this])
   (stop [this]))
 
-(defn -start [this] this)
+(defn- -start [this] this)
 
-(defn -stop
+(defn- -stop
   [{:keys [vertices-buffer indices-buffer], :as this}]
   (println "stopping vulkan mesh")
   (vk.vulkan-buffer/stop vertices-buffer)
