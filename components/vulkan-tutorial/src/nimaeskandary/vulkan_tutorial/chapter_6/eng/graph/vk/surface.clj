@@ -31,7 +31,7 @@
 
 (defn -stop
   [{:keys [physical-device vk-surface], :as this}]
-  (println "destroying vulkan surface")
+  (println "stopping vulkan surface")
   (-> (vk.physical-device/get-vk-physical-device physical-device)
       .getInstance
       (KHRSurface/vkDestroySurfaceKHR vk-surface nil))

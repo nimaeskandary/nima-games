@@ -237,7 +237,7 @@
 (defn -stop
   [{:keys [swap-chain-extent image-views device vk-swap-chain sync-semaphores],
     :as this}]
-  (println "destroying vulkan swap chain")
+  (println "stopping vulkan swap chain")
   (.free swap-chain-extent)
   (doseq [image-view image-views] (vk.image-view/stop image-view))
   (doseq [sync-semaphore sync-semaphores]

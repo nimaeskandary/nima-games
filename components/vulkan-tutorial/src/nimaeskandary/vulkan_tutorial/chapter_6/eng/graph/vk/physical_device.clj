@@ -10,6 +10,7 @@
                              VK12
                              VkExtensionProperties
                              VkInstance
+                             VkMemoryType
                              VkPhysicalDevice
                              VkPhysicalDeviceFeatures2
                              VkPhysicalDeviceMemoryProperties2
@@ -21,11 +22,12 @@
   (start [this])
   (stop [this])
   (get-device-name ^String [this])
-  (get-vk-mem-props [this])
+  (get-vk-mem-props ^VkPhysicalDeviceMemoryProperties2 [this])
   (get-vk-physical-device ^VkPhysicalDevice [this])
   (get-vk-physical-device-features [this])
   (get-vk-physical-device-props [this])
-  (get-vk-queue-family-props ^VkQueueFamilyProperties2$Buffer [this]))
+  (get-vk-queue-family-props ^VkQueueFamilyProperties2$Buffer [this])
+  (memory-type-from-props ^Integer [this type-bits reqs-mask]))
 
 (defn -start
   [{:keys [^VkPhysicalDevice vk-physical-device], :as this}]
@@ -105,7 +107,9 @@
   (-> (.properties vk-physical-device-props)
       .deviceNameString))
 
-(defn -get-vk-mem-props [{:keys [vk-mem-props]}] vk-mem-props)
+(defn -get-vk-mem-props
+  [{:keys [^VkPhysicalDeviceMemoryProperties2 vk-mem-props]}]
+  (.memoryProperties vk-mem-props))
 
 (defn -get-vk-physical-device [{:keys [vk-physical-device]}] vk-physical-device)
 
@@ -121,6 +125,26 @@
   ^VkQueueFamilyProperties2$Buffer [{:keys [vk-queue-family-props]}]
   vk-queue-family-props)
 
+(defn -memory-type-from-props
+  [{:keys [^VkPhysicalDeviceMemoryProperties2 vk-mem-props]} type-bits
+   reqs-mask]
+  (let [mem-types (-> (.memoryProperties vk-mem-props)
+                      .memoryTypes)
+        result (atom nil)
+        type-bits (atom type-bits)]
+    (doseq [^Integer i (range VK12/VK_MAX_MEMORY_TYPES)
+            :while (nil? @result)]
+      (when (and (= 1 (bit-and @type-bits 1))
+                 (= reqs-mask
+                    (bit-and (-> ^VkMemoryType (.get mem-types i)
+                                 .propertyFlags)
+                             reqs-mask)))
+        (reset! result i))
+      (swap! type-bits bit-shift-right 1))
+    (when (nil? @result) (throw (Exception. "failed to find memory type")))
+    @result))
+
+
 (defrecord PhysicalDevice [vk-physical-device]
   PhysicalDeviceI
     (start [this] (-start this))
@@ -131,7 +155,9 @@
     (get-vk-physical-device-features [this]
       (-get-vk-physical-device-features this))
     (get-vk-physical-device-props [this] (-get-vk-physical-device-props this))
-    (get-vk-queue-family-props [this] (-get-vk-queue-family-props this)))
+    (get-vk-queue-family-props [this] (-get-vk-queue-family-props this))
+    (memory-type-from-props [this type-bits reqs-maks]
+      (-memory-type-from-props this type-bits reqs-maks)))
 
 (defn has-graphics-queue-family?
   [{:keys [^VkQueueFamilyProperties2$Buffer vk-queue-family-props]}]

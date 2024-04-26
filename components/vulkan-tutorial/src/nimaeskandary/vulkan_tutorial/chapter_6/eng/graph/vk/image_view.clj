@@ -48,6 +48,7 @@
 
 (defn -stop
   [{:keys [device vk-image-view], :as this}]
+  (println "stopping image view")
   (VK12/vkDestroyImageView (vk.device/get-vk-device device) vk-image-view nil)
   this)
 

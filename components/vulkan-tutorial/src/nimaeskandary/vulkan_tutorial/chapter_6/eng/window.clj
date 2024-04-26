@@ -11,8 +11,8 @@
 (defprotocol WindowI
   (start [this])
   (stop [this])
-  (^Integer get-width [this])
-  (^Integer get-height [this])
+  (get-width ^Integer [this])
+  (get-height ^Integer [this])
   (get-mouse-input [this])
   (get-window-handle [this])
   (is-key-pressed? [this key-code])
@@ -72,7 +72,6 @@
         mouse-input (eng.mouse-input/start (eng.mouse-input/->MouseInput
                                             window-handle))]
     (assoc this :mouse-input mouse-input)))
-
 
 (defn -stop
   [{:keys [window-handle], :as this}]
