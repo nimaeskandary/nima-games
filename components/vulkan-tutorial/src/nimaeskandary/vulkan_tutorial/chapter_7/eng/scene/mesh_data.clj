@@ -2,4 +2,4 @@
 
 (defrecord ModelData [^String model-id mesh-data-list])
 
-(defrecord MeshData [^floats positions ^ints indices])
+(defrecord MeshData [^floats positions ^floats text-coords ^ints indices])

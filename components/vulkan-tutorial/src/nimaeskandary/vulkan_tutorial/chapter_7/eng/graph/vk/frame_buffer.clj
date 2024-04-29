@@ -12,7 +12,7 @@
   (get-vk-frame-buffer [this]))
 
 (defn -start
-  [{:keys [device width height p-attachments render-pass], :as this}]
+  [{:keys [device width height p-attachments vk-render-pass], :as this}]
   (println "starting frame buffer")
   (with-open [stack (MemoryStack/stackPush)]
     (let [^VkDevice vk-device (vk.device/get-vk-device device)
@@ -22,7 +22,7 @@
                                      (.width width)
                                      (.height height)
                                      (.layers 1)
-                                     (.renderPass render-pass))
+                                     (.renderPass vk-render-pass))
           long-b (.mallocLong stack 1)
           _ (-> (VK12/vkCreateFramebuffer vk-device
                                           frame-buff-create-info
@@ -40,7 +40,7 @@
 
 (defn -get-vk-frame-buffer [{:keys [vk-frame-buffer]}] vk-frame-buffer)
 
-(defrecord FrameBuffer [device width height p-attachments render-pass]
+(defrecord FrameBuffer [device width height p-attachments vk-render-pass]
   FrameBufferI
     (start [this] (-start this))
     (stop [this] (-stop this))

@@ -44,9 +44,9 @@
                                              (MemoryUtil/NULL))
         this (assoc this
                     :window-handle window-handle
-                    :height (atom height)
-                    :width (atom width)
-                    :resized? (atom false))
+                    :height-atom (atom height)
+                    :width-atom (atom width)
+                    :resized?-atom (atom false))
         _ (do (when (= (MemoryUtil/NULL) window-handle)
                 (throw (Exception. "Failed to create the GLFW window")))
               (GLFW/glfwSetFramebufferSizeCallback window-handle
@@ -81,9 +81,9 @@
   (GLFW/glfwTerminate)
   this)
 
-(defn -get-height [this] (deref (:height this)))
+(defn -get-height [{:keys [height-atom]}] @height-atom)
 
-(defn -get-width [this] (deref (:width this)))
+(defn -get-width [{:keys [width-atom]}] @width-atom)
 
 (defn -get-mouse-input [this] (:mouse-input this))
 
@@ -93,22 +93,22 @@
   [this key-code]
   (= GLFW/GLFW_PRESS (GLFW/glfwGetKey (:window-handle this) key-code)))
 
-(defn -is-resized? [this] (deref (:resized? this)))
+(defn -is-resized? [{:keys [resized?-atom]}] @resized?-atom)
 
 (defn -poll-events
   [this]
   (GLFW/glfwPollEvents)
   (eng.mouse-input/input (:mouse-input this)))
 
-(defn -reset-resized [this] (reset! (:resized? this) false))
+(defn -reset-resized [{:keys [resized?-atom]}] (reset! resized?-atom false))
 
 (defn -resize
-  [{:keys [resized? width height]} w h]
-  (reset! resized? true)
-  (reset! width w)
-  (reset! height h))
+  [{:keys [resized?-atom width-atom height-atom]} w h]
+  (reset! resized?-atom true)
+  (reset! width-atom w)
+  (reset! height-atom h))
 
-(defn -set-resized [this value] (reset! (:resized? this) value))
+(defn -set-resized [{:keys [resized?-atom]} value] (reset! resized?-atom value))
 
 (defn -set-should-close
   [this]

@@ -32,7 +32,7 @@
   (start [this])
   (stop [this])
   (get-image-views [this])
-  (get-num-images [this])
+  (get-num-images ^Integer [this])
   (get-surface-format [this])
   (get-swap-chain-extent ^VkExtent2D [this])
   (get-vk-swap-chain ^Long [this])
@@ -296,7 +296,8 @@
             (throw (Exception. ^String
                                (format "failed to present image: %d" status))))
       (reset! current-frame-atom (mod (inc @current-frame-atom)
-                                      (count image-views))))))
+                                      (count image-views)))
+      @resize?)))
 
 (defn -get-image-views [{:keys [image-views]}] image-views)
 

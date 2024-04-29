@@ -73,8 +73,12 @@
     (->TransferBuffers src-buffer dst-buffer)))
 
 (defn- create-vertices-buffers
-  [device {:keys [^floats positions], :as _mesh-data}]
-  (let [buffer-size (* (alength positions) vk.graph-constants/float-length)
+  [device {:keys [^floats positions ^floats text-coords], :as _mesh-data}]
+  (let [text-coords (if (or (nil? text-coords) (= 0 (alength text-coords)))
+                      (float-array (* 2 (/ (alength positions) 3)))
+                      text-coords)
+        num-elements (+ (alength positions) (alength text-coords))
+        buffer-size (* num-elements vk.graph-constants/float-length)
         src-buffer (-> (vk.vulkan-buffer/map->VulkanBuffer
                         {:device device,
                          :requested-size buffer-size,
@@ -93,8 +97,16 @@
         mapped-memory (vk.vulkan-buffer/map-memory src-buffer)
         data (MemoryUtil/memFloatBuffer mapped-memory
                                         (vk.vulkan-buffer/get-requested-size
-                                         src-buffer))]
-    (.put data positions)
+                                         src-buffer))
+        rows (/ (alength positions) 3)]
+    (doseq [i (range rows)]
+      (let [start-pos (* 3 i)
+            start-text-coord (* 2 i)]
+        (.put data ^Float (aget positions start-pos))
+        (.put data ^Float (aget positions (inc start-pos)))
+        (.put data ^Float (aget positions (+ 2 start-pos)))
+        (.put data ^Float (aget text-coords start-text-coord))
+        (.put data ^Float (aget text-coords (inc start-text-coord)))))
     (vk.vulkan-buffer/unmap-memory src-buffer)
     (->TransferBuffers src-buffer dst-buffer)))
 

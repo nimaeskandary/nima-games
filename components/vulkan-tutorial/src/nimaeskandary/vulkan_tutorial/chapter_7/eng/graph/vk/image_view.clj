@@ -27,7 +27,7 @@
   (with-open [stack (MemoryStack/stackPush)]
     (let [long-b (.mallocLong stack 1)
           view-create-info (-> (VkImageViewCreateInfo/calloc stack)
-                               (.sType$Default)
+                               .sType$Default
                                (.image vk-image)
                                (.viewType view-type)
                                (.format format)

@@ -1,5 +1,5 @@
 (ns nimaeskandary.vulkan-tutorial.chapter-6.eng.graph.vk.graph-constants)
 
-(def float-length 4)
-(def int-length 4)
-(def mat-4x4-size (* 16 float-length))
+(def ^Integer float-length 4)
+(def ^Integer int-length 4)
+(def ^Integer mat-4x4-size (* 16 float-length))

@@ -16,7 +16,7 @@
   [{:keys [window-title app-logic], :as this}]
   (println "starting engine")
   (let [window (eng.window/start (eng.window/->Window window-title nil))
-        scene (scene.scene/->Scene window)
+        scene (scene.scene/start (scene.scene/->Scene window))
         render (graph.render/start (graph.render/->Render window scene))]
     (app-logic/init app-logic window scene render)
     (assoc this

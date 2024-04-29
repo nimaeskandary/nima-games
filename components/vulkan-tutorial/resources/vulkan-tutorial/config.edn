@@ -1,8 +1,11 @@
 ;; not using
 ;; https://github.com/lwjglgamedev/vulkanbook/blob/master/booksamples/chapter-01/src/main/java/org/vulkanb/eng/EngineProperties.java
-{:physical-device-name nil,
+{:fov 68.0,
+ :physical-device-name nil,
  :requested-images 3,
  :shader-recompilation? true,
  :ups 30,
  :validate? true,
- :vysnc? true}
+ :vsync? true,
+ :z-far 100.0,
+ :z-near 1.0}

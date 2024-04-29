@@ -15,13 +15,15 @@
                              VkGraphicsPipelineCreateInfo
                              VkPipelineColorBlendAttachmentState
                              VkPipelineColorBlendStateCreateInfo
+                             VkPipelineDepthStencilStateCreateInfo
                              VkPipelineDynamicStateCreateInfo
                              VkPipelineInputAssemblyStateCreateInfo
                              VkPipelineLayoutCreateInfo
                              VkPipelineMultisampleStateCreateInfo
                              VkPipelineRasterizationStateCreateInfo
                              VkPipelineShaderStageCreateInfo
-                             VkPipelineViewportStateCreateInfo)))
+                             VkPipelineViewportStateCreateInfo
+                             VkPushConstantRange)))
 
 (defprotocol PipelineI
   (start [this])
@@ -30,12 +32,13 @@
   (get-vk-pipeline-layout ^Long [this]))
 
 (defrecord PipelineCreateInfo [^Long vk-render-pass shader-program
-                               ^Long num-color-attachments vi-input-state-info])
+                               ^Long num-color-attachments vi-input-state-info
+                               has-depth-attachment? push-constant-size])
 
 (defn- -start
   [{:keys [pipeline-cache],
     {:keys [vk-render-pass shader-program num-color-attachments
-            vi-input-state-info]}
+            vi-input-state-info has-depth-attachment? push-constant-size]}
     :pipeline-create-info,
     :as this}]
   (println "creating pipeline")
@@ -73,6 +76,15 @@
           (-> (VkPipelineMultisampleStateCreateInfo/calloc stack)
               .sType$Default
               (.rasterizationSamples VK12/VK_SAMPLE_COUNT_1_BIT))
+          depth-stencil-create-info
+          (when has-depth-attachment?
+            (-> (VkPipelineDepthStencilStateCreateInfo/calloc stack)
+                .sType$Default
+                (.depthTestEnable true)
+                (.depthWriteEnable true)
+                (.depthCompareOp VK12/VK_COMPARE_OP_LESS_OR_EQUAL)
+                (.depthBoundsTestEnable false)
+                (.stencilTestEnable false)))
           blend-attachment-state (VkPipelineColorBlendAttachmentState/calloc
                                   num-color-attachments
                                   stack)
@@ -93,9 +105,17 @@
               (.pDynamicStates (.ints stack
                                       VK12/VK_DYNAMIC_STATE_VIEWPORT
                                       VK12/VK_DYNAMIC_STATE_SCISSOR)))
-          p-pipeline-layout-create-info (-> (VkPipelineLayoutCreateInfo/calloc
-                                             stack)
-                                            .sType$Default)
+          ;; using push constants for now instead of uniforms
+          push-constant-range
+          (when (and push-constant-size (pos? push-constant-size))
+            (-> (VkPushConstantRange/calloc 1 stack)
+                (.stageFlags VK12/VK_SHADER_STAGE_VERTEX_BIT)
+                (.offset 0)
+                (.size push-constant-size)))
+          p-pipeline-layout-create-info
+          (-> (VkPipelineLayoutCreateInfo/calloc stack)
+              .sType$Default
+              (.pPushConstantRanges push-constant-range))
           ^VkDevice vk-device (-> (vk.pipeline-cache/get-device pipeline-cache)
                                   vk.device/get-vk-device)
           _ (-> (VK12/vkCreatePipelineLayout vk-device
@@ -117,6 +137,8 @@
                        (.pDynamicState dynamic-state-create-info)
                        (.layout vk-pipeline-layout)
                        (.renderPass vk-render-pass))
+          _ (when depth-stencil-create-info
+              (.pDepthStencilState pipeline depth-stencil-create-info))
           _ (-> (VK12/vkCreateGraphicsPipelines
                  vk-device
                  (vk.pipeline-cache/get-vk-pipeline-cache pipeline-cache)

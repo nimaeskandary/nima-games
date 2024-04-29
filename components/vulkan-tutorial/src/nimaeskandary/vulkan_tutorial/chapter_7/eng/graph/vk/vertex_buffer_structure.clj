@@ -11,8 +11,9 @@
                              VkVertexInputBindingDescription
                              VkVertexInputBindingDescription$Buffer)))
 
-(def ^Integer number-of-attributes 1)
+(def ^Integer number-of-attributes 2)
 (def ^Integer position-components 3)
+(def ^Integer text-coord-components 2)
 
 (defn -start
   [this]
@@ -20,15 +21,23 @@
   (let [vi-attrs (VkVertexInputAttributeDescription/calloc number-of-attributes)
         vi-bindings (VkVertexInputBindingDescription/calloc 1)
         vi (VkPipelineVertexInputStateCreateInfo/calloc)
-        i 0]
-    (-> ^VkVertexInputAttributeDescription (.get vi-attrs i)
-        (.binding 0)
-        (.location i)
-        (.format VK12/VK_FORMAT_R32G32B32_SFLOAT)
-        (.offset 0))
+        i 0
+        _ (-> ^VkVertexInputAttributeDescription (.get vi-attrs i)
+              (.binding 0)
+              (.location i)
+              (.format VK12/VK_FORMAT_R32G32B32_SFLOAT)
+              (.offset 0))
+        i ^Integer (inc i)
+        _ (-> ^VkVertexInputAttributeDescription (.get vi-attrs i)
+              (.binding 0)
+              (.location i)
+              (.format VK12/VK_FORMAT_R32G32_SFLOAT)
+              (.offset (* position-components
+                          vk.graph-constants/float-length)))]
     (-> ^VkVertexInputBindingDescription (.get vi-bindings 0)
         (.binding 0)
-        (.stride (* position-components vk.graph-constants/float-length))
+        (.stride (+ (* position-components vk.graph-constants/float-length)
+                    (* text-coord-components vk.graph-constants/float-length)))
         (.inputRate VK12/VK_VERTEX_INPUT_RATE_VERTEX))
     (assoc this
            :vi-attrs vi-attrs
@@ -37,8 +46,8 @@
            (-> vi
                (.sType
                 VK12/VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO)
-               (.pVertexAttributeDescriptions vi-attrs)
-               (.pVertexBindingDescriptions vi-bindings)))))
+               (.pVertexBindingDescriptions vi-bindings)
+               (.pVertexAttributeDescriptions vi-attrs)))))
 
 (defn -stop
   [{:keys [^VkPipelineVertexInputStateCreateInfo vi
