@@ -1,8 +1,8 @@
-(ns nimaeskandary.vulkan-tutorial.chapter-7.eng.scene.scene
-  (:require [nimaeskandary.vulkan-tutorial.chapter-7.eng.scene.projection :as
+(ns nimaeskandary.vulkan-tutorial.chapter-8.eng.scene.scene
+  (:require [nimaeskandary.vulkan-tutorial.chapter-8.eng.scene.projection :as
              scene.projection]
-            [nimaeskandary.vulkan-tutorial.chapter-7.eng.window :as eng.window]
-            [nimaeskandary.vulkan-tutorial.chapter-7.eng.scene.entity :as
+            [nimaeskandary.vulkan-tutorial.chapter-8.eng.window :as eng.window]
+            [nimaeskandary.vulkan-tutorial.chapter-8.eng.scene.entity :as
              scene.entity]))
 
 (defprotocol SceneI
@@ -13,7 +13,7 @@
   (get-entities-map [this])
   (get-projection [this])
   (remove-all-entities [this])
-  (remove-entity [this entity]))
+  (remove-entity [this]))
 
 (defn- -start
   [{:keys [window], :as this}]
